@@ -39,9 +39,13 @@ function createWindow() {
         win.loadFile(path.join(process.env.DIST || '', 'index.html'));
     }
 
-    // Handle FFmpeg recording bridge
     ipcMain.handle('start-ffmpeg-capture', async (event, options) => {
-        const { width, height, fps, filename } = options;
+        let { width, height, fps, filename } = options;
+
+        // EINVAL Fix: Ensure dimensions are even
+        width = Math.floor(width / 2) * 2;
+        height = Math.floor(height / 2) * 2;
+
 
         const { filePath } = await dialog.showSaveDialog({
             title: 'Save ProRes Video',

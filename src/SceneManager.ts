@@ -162,9 +162,12 @@ export class SceneManager {
 
         // Fix Alpha using ShaderPass (Safety Net)
         // Ensures that visible pixels have alpha, avoiding black outlines or missing glow alpha
+        // Fix Alpha using ShaderPass (Safety Net)
+        // Ensures that visible pixels have alpha, avoiding black outlines or missing glow alpha
         const AlphaRecoveryShader = {
             uniforms: {
-                'tDiffuse': { value: null }
+                'tDiffuse': { value: null },
+                'alphaThreshold': { value: 0.5 }
             },
             vertexShader: `
                 varying vec2 vUv;
@@ -175,12 +178,14 @@ export class SceneManager {
             `,
             fragmentShader: `
                 uniform sampler2D tDiffuse;
+                uniform float alphaThreshold;
                 varying vec2 vUv;
                 void main() {
                     vec4 tex = texture2D( tDiffuse, vUv );
                     float brightness = max(tex.r, max(tex.g, tex.b));
-                    // If pixel is bright, it should have alpha.
-                    gl_FragColor = vec4( tex.rgb, max(tex.a, brightness) );
+                    // If pixel is bright enough, it should have alpha.
+                    float recoveredAlpha = max(tex.a, step(alphaThreshold, brightness) * brightness);
+                    gl_FragColor = vec4( tex.rgb, recoveredAlpha );
                 }
             `
         };
@@ -271,7 +276,11 @@ export class SceneManager {
             // Scale visuals for export
             this.sphere.setResolution(this.exportSize, this.exportSize);
             const originalBloomRadius = this.bloomPass.radius;
+            const originalBloomStrength = this.bloomPass.strength;
+
             this.bloomPass.radius *= scaleFactor;
+            this.bloomPass.strength *= 0.85; // Slight reduction for 4K density
+
 
             // Force last pass to render to screen so we can read pixels
             const lastPass = this.composer.passes[this.composer.passes.length - 1];
@@ -293,6 +302,7 @@ export class SceneManager {
             // Restore preview size and visuals
             this.sphere.setResolution(originalSize.x, originalSize.y);
             this.bloomPass.radius = originalBloomRadius;
+            this.bloomPass.strength = originalBloomStrength;
             this.renderer.setSize(originalSize.x, originalSize.y, false);
             this.composer.setSize(originalSize.x, originalSize.y);
         } finally {
@@ -331,7 +341,10 @@ export class SceneManager {
         // Scale visuals for export
         this.sphere.setResolution(this.exportSize, this.exportSize);
         const originalBloomRadius = this.bloomPass.radius;
+        const originalBloomStrength = this.bloomPass.strength;
+
         this.bloomPass.radius *= scaleFactor;
+        this.bloomPass.strength *= 0.85;
 
         // Force last pass to render to screen so we can read pixels
         const lastPass = this.composer.passes[this.composer.passes.length - 1];
@@ -350,6 +363,7 @@ export class SceneManager {
         // Restore visuals
         this.sphere.setResolution(originalSize.x, originalSize.y);
         this.bloomPass.radius = originalBloomRadius;
+        this.bloomPass.strength = originalBloomStrength;
 
         // Mirror: In motion render mode, we want the user to see the progress.
         // We'll restore the mirror preview immediately.
@@ -412,12 +426,17 @@ export class SceneManager {
 
         // Render at 4K with composer (includes bloom and tone mapping)
         this.renderer.setSize(size, size, false);
+        this.composer.setSize(size, size);
 
 
         // Scale visuals for export
         this.sphere.setResolution(size, size);
         const originalBloomRadius = this.bloomPass.radius;
+        const originalBloomStrength = this.bloomPass.strength;
+
         this.bloomPass.radius *= scaleFactor;
+        // User requested slight reduction (0.85) to prevent overexposure/whiteout in 4K
+        this.bloomPass.strength *= 0.85;
 
         // Force last pass to render to screen so we can read pixels
         const lastPass = this.composer.passes[this.composer.passes.length - 1];
@@ -467,6 +486,7 @@ export class SceneManager {
         this.composer.setSize(originalSize.x, originalSize.y);
         this.sphere.setResolution(originalSize.x, originalSize.y);
         this.bloomPass.radius = originalBloomRadius;
+        this.bloomPass.strength = originalBloomStrength;
     }
 
 
