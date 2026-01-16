@@ -41,8 +41,6 @@ function createWindow() {
 
     // Handle FFmpeg recording bridge
     ipcMain.handle('start-ffmpeg-capture', async (event, options) => {
-        if (ffmpegProcess) return { error: 'Capture already in progress' };
-
         const { width, height, fps, filename } = options;
 
         const { filePath } = await dialog.showSaveDialog({
@@ -53,40 +51,63 @@ function createWindow() {
 
         if (!filePath) return null;
 
-        const args = [
-            '-y',
-            '-f', 'rawvideo',
-            '-vcodec', 'rawvideo',
-            '-s', `${width}x${height}`,
-            '-pix_fmt', 'rgba',
-            '-r', `${fps}`,
-            '-i', '-',
-            '-c:v', 'prores_ks',
-            '-profile:v', '4',
-            '-pix_fmt', 'yuva444p10le',
-            filePath
-        ];
+        return new Promise((resolve, reject) => {
+            // Use fluent-ffmpeg
+            const ffmpeg = require('fluent-ffmpeg');
 
-        // Use the path from require('ffmpeg-static')
-        const cmd = typeof ffmpegPath === 'string' ? ffmpegPath : 'ffmpeg';
-        ffmpegProcess = spawn(cmd, args);
+            // Set path if needed (though usually fluent-ffmpeg finds it if in PATH, 
+            // but we're in electron, so we use the static binary)
+            const binaryPath = typeof ffmpegPath === 'string' ? ffmpegPath : 'ffmpeg';
+            ffmpeg.setFfmpegPath(binaryPath);
 
-        ffmpegProcess.on('close', (code) => {
-            console.log(`FFmpeg process exited with code ${code}`);
-            ffmpegProcess = null;
+            const command = ffmpeg()
+                .input('pipe:0')
+                .inputFormat('rawvideo')
+                .inputOptions([
+                    '-vcodec rawvideo',
+                    `-s ${width}x${height}`,
+                    '-pix_fmt rgba',
+                    `-r ${fps}`
+                ])
+                .output(filePath)
+                .outputOptions([
+                    '-c:v prores_ks',
+                    '-profile:v 4',
+                    '-pix_fmt yuva444p10le'
+                ])
+                .on('start', (cmdLine: string) => {
+                    console.log('FFmpeg started:', cmdLine);
+                    ffmpegProcess = command.ffmpegProc; // Get the underlying process
+                    resolve({ filePath });
+                })
+                .on('error', (err: any) => {
+                    console.error('FFmpeg error:', err);
+                    if (ffmpegProcess) {
+                        ffmpegProcess = null;
+                    }
+                })
+                .on('end', () => {
+                    console.log('FFmpeg finished');
+                    ffmpegProcess = null;
+                });
+
+            // Start processing (it will wait for input on stdin)
+            command.run();
         });
-
-        return { filePath };
     });
 
     ipcMain.on('ffmpeg-frame', (event, buffer: Buffer) => {
-        if (ffmpegProcess && ffmpegProcess.stdin) {
-            ffmpegProcess.stdin.write(buffer);
+        if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed) {
+            try {
+                ffmpegProcess.stdin.write(buffer);
+            } catch (e) {
+                console.error('Error writing to ffmpeg stdin:', e);
+            }
         }
     });
 
     ipcMain.on('stop-ffmpeg-capture', () => {
-        if (ffmpegProcess && ffmpegProcess.stdin) {
+        if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed) {
             ffmpegProcess.stdin.end();
             ffmpegProcess = null;
         }

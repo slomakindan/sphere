@@ -254,6 +254,9 @@ export class SceneManager {
         // Calculate scale factor for fidelity
         const scaleFactor = this.exportSize / originalSize.height;
 
+        // Snapshot Fix: Ensure clear alpha is 0
+        this.renderer.setClearColor(0x000000, 0);
+
         this.renderer.setSize(this.exportSize, this.exportSize, false);
         this.composer.setSize(this.exportSize, this.exportSize);
 
@@ -307,6 +310,9 @@ export class SceneManager {
 
         // Calculate scale factor for fidelity
         const scaleFactor = this.exportSize / originalSize.height;
+
+        // Snapshot Fix: Ensure clear alpha is 0
+        this.renderer.setClearColor(0x000000, 0);
 
         this.renderer.setSize(this.exportSize, this.exportSize, false);
         this.composer.setSize(this.exportSize, this.exportSize);
