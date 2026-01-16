@@ -96,14 +96,26 @@ function createWindow() {
         });
     });
 
-    ipcMain.on('ffmpeg-frame', (event, buffer: Buffer) => {
+    ipcMain.handle('ffmpeg-frame', async (event, buffer: Buffer) => {
         if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed) {
             try {
-                ffmpegProcess.stdin.write(buffer);
+                const ok = ffmpegProcess.stdin.write(buffer);
+                if (!ok) {
+                    await new Promise<void>((resolve) => {
+                        if (ffmpegProcess && ffmpegProcess.stdin) {
+                            ffmpegProcess.stdin.once('drain', resolve);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+                return true;
             } catch (e) {
                 console.error('Error writing to ffmpeg stdin:', e);
+                return false;
             }
         }
+        return false;
     });
 
     ipcMain.on('stop-ffmpeg-capture', () => {

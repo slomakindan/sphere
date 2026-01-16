@@ -24,7 +24,8 @@ export class SceneManager {
     private isRenderingMotion: boolean = false;
     private currentTime: number = 0;
     private timeStep: number = 1 / 60;
-    private exportSize: number = 2048;
+    private isBusyExporting: boolean = false;
+    private exportSize: number = 4096;
 
     constructor(container: HTMLElement) {
         this.scene = new THREE.Scene();
@@ -227,6 +228,8 @@ export class SceneManager {
     }
 
     public animate(audio: { level: number, bass: number, mid: number, treble: number }) {
+        if (this.isCapturingProRes && this.isBusyExporting) return;
+
         if (this.isCapturingProRes) {
             this.currentTime += this.timeStep;
         } else if (!this.isRenderingMotion) {
@@ -246,47 +249,55 @@ export class SceneManager {
         }
     }
 
+
     private async renderForExport() {
-        // Render at high resolution regardless of window size
-        const originalSize = new THREE.Vector2();
-        this.renderer.getSize(originalSize);
+        if (this.isBusyExporting) return;
+        this.isBusyExporting = true;
 
-        // Calculate scale factor for fidelity
-        const scaleFactor = this.exportSize / originalSize.height;
+        try {
+            // Render at high resolution regardless of window size
+            const originalSize = new THREE.Vector2();
+            this.renderer.getSize(originalSize);
 
-        // Snapshot Fix: Ensure clear alpha is 0
-        this.renderer.setClearColor(0x000000, 0);
+            // Calculate scale factor for fidelity
+            const scaleFactor = this.exportSize / originalSize.height;
 
-        this.renderer.setSize(this.exportSize, this.exportSize, false);
-        this.composer.setSize(this.exportSize, this.exportSize);
+            // Snapshot Fix: Ensure clear alpha is 0
+            this.renderer.setClearColor(0x000000, 0);
 
-        // Scale visuals for export
-        this.sphere.setResolution(this.exportSize, this.exportSize);
-        const originalBloomRadius = this.bloomPass.radius;
-        this.bloomPass.radius *= scaleFactor;
+            this.renderer.setSize(this.exportSize, this.exportSize, false);
+            this.composer.setSize(this.exportSize, this.exportSize);
 
-        // Force last pass to render to screen so we can read pixels
-        const lastPass = this.composer.passes[this.composer.passes.length - 1];
-        const wasRenderToScreen = lastPass.renderToScreen;
-        lastPass.renderToScreen = true;
+            // Scale visuals for export
+            this.sphere.setResolution(this.exportSize, this.exportSize);
+            const originalBloomRadius = this.bloomPass.radius;
+            this.bloomPass.radius *= scaleFactor;
 
-        this.composer.render();
+            // Force last pass to render to screen so we can read pixels
+            const lastPass = this.composer.passes[this.composer.passes.length - 1];
+            const wasRenderToScreen = lastPass.renderToScreen;
+            lastPass.renderToScreen = true;
 
-        lastPass.renderToScreen = wasRenderToScreen;
+            this.composer.render();
 
-        // Read pixels from WebGL framebuffer
-        const gl = this.renderer.getContext();
-        const pixels = new Uint8Array(this.exportSize * this.exportSize * 4);
-        gl.readPixels(0, 0, this.exportSize, this.exportSize, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+            lastPass.renderToScreen = wasRenderToScreen;
 
-        // Send to Electron Main
-        if (typeof electronAPI !== 'undefined') {
-            electronAPI.sendFrame(pixels);
+            // Read pixels from WebGL framebuffer
+            const gl = this.renderer.getContext();
+            const pixels = new Uint8Array(this.exportSize * this.exportSize * 4);
+            gl.readPixels(0, 0, this.exportSize, this.exportSize, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+            // Send to Electron Main
+            await this.sendFrame(pixels);
+
+            // Restore preview size and visuals
+            this.sphere.setResolution(originalSize.x, originalSize.y);
+            this.bloomPass.radius = originalBloomRadius;
+            this.renderer.setSize(originalSize.x, originalSize.y, false);
+            this.composer.setSize(originalSize.x, originalSize.y);
+        } finally {
+            this.isBusyExporting = false;
         }
-
-        // Restore preview size and visuals
-        this.sphere.setResolution(originalSize.x, originalSize.y);
-        this.bloomPass.radius = originalBloomRadius;
     }
 
 
@@ -459,9 +470,9 @@ export class SceneManager {
     }
 
 
-    public sendFrame(pixels: Uint8Array) {
+    public async sendFrame(pixels: Uint8Array) {
         if (typeof electronAPI !== 'undefined') {
-            electronAPI.sendFrame(pixels);
+            await electronAPI.sendFrame(pixels);
         }
     }
 }
