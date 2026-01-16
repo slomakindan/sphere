@@ -1,0 +1,23 @@
+{
+    "baseColor": "#1a0000",
+    "accentColor": "#ff0000",
+    "spotScale": 5.0,
+    "spotThreshold": 0.3,
+    "minSize": 1.0,
+    "maxSize": 4.0,
+    "opacity": 0.7,
+    "speed": 0.8,
+    "density": 3.0,
+    "strength": 0.8,
+    "scale": 2.0,
+    "octaves": 7,
+    "swirlEnabled": false,
+    "glitchActive": true,
+    "glitchIntensity": 1.5,
+    "coreIntensity": 0.5,
+    "coreColor": "#ff3300",
+    "showCore": true,
+    "showStrips": true,
+    "stripsColor": "#ff0000",
+    "stripsOpacity": 0.8
+}

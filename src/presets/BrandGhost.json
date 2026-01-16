@@ -1,0 +1,22 @@
+{
+    "baseColor": "#0a0a1a",
+    "accentColor": "#0057FF",
+    "spotScale": 2.0,
+    "spotThreshold": 0.6,
+    "minSize": 0.6,
+    "maxSize": 2.0,
+    "opacity": 0.7,
+    "speed": 0.15,
+    "density": 1.5,
+    "strength": 0.2,
+    "scale": 1.0,
+    "octaves": 4,
+    "swirlEnabled": false,
+    "imageEnabled": true,
+    "imageColorMix": 0.6,
+    "imageDisplacementFactor": 0.3,
+    "imageMorphFactor": 0.0,
+    "coreIntensity": 2.0,
+    "coreColor": "#0057FF",
+    "showCore": true
+}

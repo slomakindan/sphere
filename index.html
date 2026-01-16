@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UNIT CORE DESKTOP v3.1</title>
+  <link rel="stylesheet" href="./src/style.css" />
+</head>
+
+<body>
+  <!-- Drag handle for Electron window movement -->
+  <header id="window-drag-bar"></header>
+
+  <div id="desktop-wrapper">
+    <aside id="ui-panel">
+      <div class="panel-header">
+        <h1>UNIT CORE v3.2</h1>
+        <div id="status">Система готова</div>
+      </div>
+
+      <div class="controls-group">
+        <label>Аудио</label>
+        <div class="button-row">
+          <button id="loadAudioBtn">📁 Файл</button>
+          <button id="systemAudioBtn">🔊 Система</button>
+        </div>
+        <button id="playPauseBtn" disabled>▶ Воспроизвести</button>
+      </div>
+
+      <div class="controls-group">
+        <label>Захват движения</label>
+        <div class="button-row">
+          <button id="recordMotionBtn">🔴 Запись</button>
+          <button id="loadMotionBtn">📂 Загрузить</button>
+        </div>
+        <div id="captureInfo" class="status-text">Буфер: 0 кадров</div>
+      </div>
+
+      <div class="controls-group">
+        <label>Режим</label>
+        <select id="stateSelector">
+          <option value="INIT">#1 Инициализация</option>
+          <option value="ANALYSIS">#2 Анализ</option>
+          <option value="STABILIZE">#3 Стабилизация</option>
+          <option value="ACTIVE">#4 Активный</option>
+        </select>
+      </div>
+
+      <div class="controls-group">
+        <label>Экспорт</label>
+        <div class="export-options">
+          <button id="exportPngBtn">📷 Снимок 4K</button>
+          <button id="savePresetBtn">💾 Сохранить</button>
+          <button id="loadPresetBtn">📂 Загрузить</button>
+        </div>
+        <div class="button-row">
+          <button id="renderMotionBtn" class="record-button" disabled>🎬 Рендер 4K</button>
+          <button id="stopRenderBtn" disabled>⏹ Стоп</button>
+        </div>
+      </div>
+
+
+
+      <div id="gui-container"></div>
+    </aside>
+
+    <div id="main-content">
+      <main id="view-container">
+        <!-- Progress Bar Overlay (v3.1) -->
+        <div id="render-overlay" style="display: none;">
+          <div class="overlay-content">
+            <div class="render-title">High Fidelity Encoding...</div>
+            <div class="render-stats">Frame: <span id="currentFrame">0</span> / <span id="totalFrames">0</span></div>
+            <div class="progress-track">
+              <div id="progress-fill"></div>
+            </div>
+            <div class="render-eta">Estimated Time: <span id="eta">Calculating...</span></div>
+          </div>
+        </div>
+
+        <div id="canvas-mask">
+          <div id="app"></div>
+        </div>
+      </main>
+
+      <!-- Professional Timeline (v3.1) -->
+      <footer id="timeline-panel">
+        <div id="timecode-display">00:00:00:00</div>
+        <div id="transport-controls">
+          <button id="btn-prev-frame" title="Previous Frame">⏮</button>
+          <button id="btn-step-back" title="Step Back">◀</button>
+          <button id="btn-stop" title="Stop">⏹</button>
+          <button id="btn-play" title="Play">▶</button>
+          <button id="btn-step-fwd" title="Step Forward">▶</button>
+          <button id="btn-next-frame" title="Next Frame">⏭</button>
+          <button id="btn-record" class="record-btn" title="Record">●</button>
+        </div>
+        <div id="timeline-container">
+          <!-- TimelineController will inject canvas and playhead here -->
+        </div>
+      </footer>
+    </div>
+  </div>
+
+
+  <input type="file" id="audioInput" accept="audio/*" style="display: none" />
+  <input type="file" id="presetInput" accept=".json" style="display: none" />
+  <input type="file" id="motionInput" accept=".json" style="display: none" />
+  <input type="file" id="imageInput" accept="image/*" style="display: none" />
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>
