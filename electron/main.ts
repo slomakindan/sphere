@@ -78,7 +78,20 @@ function createWindow() {
                 .on('start', (cmdLine: string) => {
                     console.log('FFmpeg started:', cmdLine);
                     ffmpegProcess = command.ffmpegProc; // Get the underlying process
+
+                    // CRITICAL: Handle stdin errors to prevent "Error: write EINVAL" popup
+                    if (ffmpegProcess && ffmpegProcess.stdin) {
+                        ffmpegProcess.stdin.on('error', (err) => {
+                            if ((err as any).code !== 'EPIPE') {
+                                console.error('FFmpeg stdin error:', err);
+                            }
+                        });
+                    }
+
                     resolve({ filePath });
+                })
+                .on('stderr', (stderrLine: string) => {
+                    console.error('FFmpeg stderr:', stderrLine);
                 })
                 .on('error', (err: any) => {
                     console.error('FFmpeg error:', err);
@@ -97,7 +110,7 @@ function createWindow() {
     });
 
     ipcMain.handle('ffmpeg-frame', async (event, buffer: Buffer) => {
-        if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed) {
+        if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed && ffmpegProcess.stdin.writable) {
             try {
                 const ok = ffmpegProcess.stdin.write(buffer);
                 if (!ok) {
