@@ -367,7 +367,7 @@ renderMotionBtn.addEventListener('click', async () => {
         const pixels = await sceneManager.renderMotionFrame(frame, 4096);
 
         // Send to FFmpeg
-        sceneManager.sendFrame(pixels);
+        await sceneManager.sendFrame(pixels);
 
         // Update UI
         const progress = ((i + 1) / totalFrames) * 100;
