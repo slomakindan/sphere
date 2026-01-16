@@ -37,7 +37,9 @@ export class UnitSphere {
                 uSpotScale: { value: 2.0 },
                 uSpotThreshold: { value: 0.6 },
                 uAudioInfluence: { value: 1.0 },
+                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
                 // v2.5 Galaxy Swirl Mode
+
                 uSwirlEnabled: { value: false },
                 uSwirlSpeed: { value: 0.4 },
                 uTwistAmount: { value: 2.0 },
@@ -206,5 +208,9 @@ export class UnitSphere {
                 ((child as THREE.Line).material as THREE.LineBasicMaterial).color.set(params.stripsColor);
             });
         }
+    }
+
+    public setResolution(width: number, height: number) {
+        this.material.uniforms.uResolution.value.set(width, height);
     }
 }

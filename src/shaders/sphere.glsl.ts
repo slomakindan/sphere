@@ -44,6 +44,7 @@ export const vertexShader = `
     uniform float uTreble;
     
     uniform vec2 uSizeRange;
+    uniform vec2 uResolution;
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -238,8 +239,10 @@ export const vertexShader = `
         
         float baseSize = mix(uSizeRange.x, uSizeRange.y, (noise + 1.0) * 0.5);
         float clusterSize = vDensity * 2.0;
-        gl_PointSize = (baseSize + clusterSize + (uTreble * 5.0 * uAudioInfluence)) * (1.0 / -viewPosition.z); 
+        float resolutionScale = uResolution.y / 1080.0;
+        gl_PointSize = (baseSize + clusterSize + (uTreble * 5.0 * uAudioInfluence)) * resolutionScale * (1.0 / -viewPosition.z); 
     }
+
 `;
 
 export const fragmentShader = `

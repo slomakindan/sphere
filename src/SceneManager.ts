@@ -32,6 +32,7 @@ export class SceneManager {
         this.renderer = new THREE.WebGLRenderer({
             antialias: true,
             alpha: true,
+            premultipliedAlpha: false,
             preserveDrawingBuffer: true
         });
 
@@ -40,6 +41,7 @@ export class SceneManager {
         this.renderer.setPixelRatio(1);
         this.renderer.setClearColor(0x000000, 0);
         container.appendChild(this.renderer.domElement);
+
 
         // Create alpha-preserving render target for EffectComposer
         const renderTarget = new THREE.WebGLRenderTarget(1024, 1024, {
@@ -82,6 +84,11 @@ export class SceneManager {
         this.composer.setSize(size, size);
         this.camera.aspect = 1;
         this.camera.updateProjectionMatrix();
+
+        // Update resolution uniform
+        if (this.sphere) {
+            this.sphere.setResolution(size, size);
+        }
     }
 
     public updatePostParams(params: any) {
@@ -116,8 +123,16 @@ export class SceneManager {
         const originalSize = new THREE.Vector2();
         this.renderer.getSize(originalSize);
 
+        // Calculate scale factor for fidelity
+        const scaleFactor = this.exportSize / originalSize.height;
+
         this.renderer.setSize(this.exportSize, this.exportSize, false);
         this.composer.setSize(this.exportSize, this.exportSize);
+
+        // Scale visuals for export
+        this.sphere.setResolution(this.exportSize, this.exportSize);
+        const originalBloomRadius = this.bloomPass.radius;
+        this.bloomPass.radius *= scaleFactor;
 
         // Force last pass to render to screen so we can read pixels
         const lastPass = this.composer.passes[this.composer.passes.length - 1];
@@ -138,9 +153,11 @@ export class SceneManager {
             electronAPI.sendFrame(pixels);
         }
 
-        // Restore preview size
+        // Restore preview size and visuals
         this.renderer.setSize(originalSize.x, originalSize.y, false);
         this.composer.setSize(originalSize.x, originalSize.y);
+        this.sphere.setResolution(originalSize.x, originalSize.y);
+        this.bloomPass.radius = originalBloomRadius;
     }
 
 
@@ -162,8 +179,16 @@ export class SceneManager {
         const originalSize = new THREE.Vector2();
         this.renderer.getSize(originalSize);
 
+        // Calculate scale factor for fidelity
+        const scaleFactor = this.exportSize / originalSize.height;
+
         this.renderer.setSize(this.exportSize, this.exportSize, false);
         this.composer.setSize(this.exportSize, this.exportSize);
+
+        // Scale visuals for export
+        this.sphere.setResolution(this.exportSize, this.exportSize);
+        const originalBloomRadius = this.bloomPass.radius;
+        this.bloomPass.radius *= scaleFactor;
 
         // Force last pass to render to screen so we can read pixels
         const lastPass = this.composer.passes[this.composer.passes.length - 1];
@@ -178,6 +203,10 @@ export class SceneManager {
         const gl = this.renderer.getContext();
         const pixels = new Uint8Array(this.exportSize * this.exportSize * 4);
         gl.readPixels(0, 0, this.exportSize, this.exportSize, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+        // Restore visuals
+        this.sphere.setResolution(originalSize.x, originalSize.y);
+        this.bloomPass.radius = originalBloomRadius;
 
         // Mirror: In motion render mode, we want the user to see the progress.
         // We'll restore the mirror preview immediately.
@@ -232,9 +261,17 @@ export class SceneManager {
         const originalSize = new THREE.Vector2();
         this.renderer.getSize(originalSize);
 
+        // Calculate scale factor for fidelity
+        const scaleFactor = size / originalSize.height;
+
         // Render at 4K with composer (includes bloom and tone mapping)
         this.renderer.setSize(size, size, false);
         this.composer.setSize(size, size);
+
+        // Scale visuals for export
+        this.sphere.setResolution(size, size);
+        const originalBloomRadius = this.bloomPass.radius;
+        this.bloomPass.radius *= scaleFactor;
 
         // Force last pass to render to screen so we can read pixels
         const lastPass = this.composer.passes[this.composer.passes.length - 1];
@@ -279,10 +316,13 @@ export class SceneManager {
         link.download = `UNIT-V3-PNG-${Date.now()}.png`;
         link.click();
 
-        // Restore original size
+        // Restore preview size and visuals
         this.renderer.setSize(originalSize.x, originalSize.y, false);
         this.composer.setSize(originalSize.x, originalSize.y);
+        this.sphere.setResolution(originalSize.x, originalSize.y);
+        this.bloomPass.radius = originalBloomRadius;
     }
+
 
     public sendFrame(pixels: Uint8Array) {
         if (typeof electronAPI !== 'undefined') {
