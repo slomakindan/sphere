@@ -14,7 +14,8 @@ export const vertexShader = `
     uniform float uTwistAmount;
     uniform float uSwirlDetail;
     uniform float uClusterIntensity;
-    uniform float uVoidRadius; // NEW: Black hole radius
+    uniform float uVoidRadius;
+    uniform float uOrbitChaos; // NEW: Chaotic 3D rotation // NEW: Black hole radius
     
     // v3.0 Shape Morphing
     uniform int uMorphTarget; // 0=sphere, 1=cube, 2=torus
@@ -150,6 +151,9 @@ export const vertexShader = `
         float c = cos(angle);
         return vec3(p.x * c - p.z * s, p.y, p.x * s + p.z * c);
     }
+    vec3 rotateAxis(vec3 p, vec3 axis, float angle) {
+        return mix(dot(axis, p) * axis, p, cos(angle)) + cross(axis, p) * sin(angle);
+    }
 
     // v3.0 Shape Morphing Helpers
     vec3 sphereToCube(vec3 p) {
@@ -205,20 +209,30 @@ export const vertexShader = `
         if (uSwirlEnabled) {
             float dist = length(pos);
             
-            // Black Hole Effect: Cylindrical expansion (Donut shape)
-            if (uVoidRadius > 0.0) {
-               float r = length(pos.xz);
-               if (r > 0.001) {
-                   pos.xz = (pos.xz / r) * (r + uVoidRadius);
-               }
-               // Optional: Flatten slightly as holes form to look more like a galaxy disk
-               pos.y *= mix(1.0, 0.5, clamp(uVoidRadius * 0.5, 0.0, 1.0));
-               
-               dist = length(pos); // Update distance for swirl
+            // 1. Chaotic Rotation (Super 3D)
+            if (uOrbitChaos > 0.0) {
+                 float chaosAngle = uTime * uOrbitChaos * 0.5 + dist * uTwistAmount;
+                 vec3 randomAxis = normalize(vec3(
+                     snoise(pos + vec3(0.0)),
+                     snoise(pos + vec3(100.0)),
+                     snoise(pos + vec3(200.0))
+                 ));
+                 pos = rotateAxis(pos, randomAxis, chaosAngle);
+            } else {
+                 // Standard Y-axis rotation
+                 float angle = uTime * uSwirlSpeed + dist * uTwistAmount;
+                 pos = rotateY(pos, angle);
             }
 
-            float angle = uTime * uSwirlSpeed + dist * uTwistAmount;
-            pos = rotateY(pos, angle);
+            // 2. Black Hole Effect: Spherical Expansion (Event Horizon)
+            if (uVoidRadius > 0.0) {
+               float r = length(pos);
+               if (r > 0.001) {
+                   // Push particles radially out from center
+                   pos = normalize(pos) * (r + uVoidRadius);
+               }
+               dist = length(pos); // Update distance
+            }
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
             vDensity = max(0.0, density) * uClusterIntensity;
             noise = fbm(pos * uNoiseDensity + vec3(uTime * uSpeed), uOctaves, uNoiseScale);

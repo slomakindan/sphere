@@ -47,7 +47,8 @@ export class UnitSphere {
                 uTwistAmount: { value: 2.0 },
                 uSwirlDetail: { value: 4.0 },
                 uClusterIntensity: { value: 3.0 },
-                uVoidRadius: { value: 0.0 }, // NEW
+                uVoidRadius: { value: 0.0 },
+                uOrbitChaos: { value: 0.0 }, // NEW // NEW
                 // v3.0 Shape Morphing
                 uMorphTarget: { value: 0 },
                 uMorphProgress: { value: 0.0 },
@@ -201,7 +202,8 @@ export class UnitSphere {
         if (params.twistAmount !== undefined) u.uTwistAmount.value = params.twistAmount;
         if (params.swirlDetail !== undefined) u.uSwirlDetail.value = params.swirlDetail;
         if (params.clusterIntensity !== undefined) u.uClusterIntensity.value = params.clusterIntensity;
-        if (params.voidRadius !== undefined) u.uVoidRadius.value = params.voidRadius; // NEW
+        if (params.voidRadius !== undefined) u.uVoidRadius.value = params.voidRadius;
+        if (params.orbitChaos !== undefined) u.uOrbitChaos.value = params.orbitChaos; // NEW
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;
