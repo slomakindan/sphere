@@ -309,6 +309,24 @@ export const fragmentShader = `
     uniform float uChaosAmplitude;
     uniform float uChaosSpeed;
 
+    void main() {
+        float dist = length(gl_PointCoord - vec2(0.5));
+        if (dist > 0.5) discard;
+
+        float particleFade = smoothstep(0.5, 0.1, dist) * 0.6;
+        
+        // Color Spot Engine Mixing
+        vec3 color = mix(uBaseColor, uAccentColor, vColorMask);
+        
+        // v3.0 Visual DNA Color Mapping
+        if (uImageEnabled && uImageColorMix > 0.0) {
+            vec4 texColor = texture2D(uImageTexture, vUV);
+            color = mix(color, texColor.rgb, uImageColorMix);
+        }
+        
+        // Add brightness at noise peaks
+        color += vNoise * 0.1;
+
         // v3.3 Chaos Color Injection - DISABLED by user request
         /*
         if (uChaosAmplitude > 0.0) {
