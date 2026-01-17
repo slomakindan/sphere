@@ -201,6 +201,7 @@ export class UnitSphere {
         if (params.twistAmount !== undefined) u.uTwistAmount.value = params.twistAmount;
         if (params.swirlDetail !== undefined) u.uSwirlDetail.value = params.swirlDetail;
         if (params.clusterIntensity !== undefined) u.uClusterIntensity.value = params.clusterIntensity;
+        if (params.voidRadius !== undefined) u.uVoidRadius.value = params.voidRadius; // NEW
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;
