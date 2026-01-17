@@ -76,6 +76,10 @@ export const vertexShader = `
     uniform float uVortexSpeed;      // Animation speed
     uniform float uVortexTilt;       // Axis tilt (0 = horizontal bands, 1 = diagonal)
 
+    // v4.3 Containment (Keep particles cohesive)
+    uniform float uContainmentRadius;  // Max radius before particles are pulled back
+    uniform float uContainmentStrength;  // How strong the pull is
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -458,6 +462,17 @@ export const vertexShader = `
         
         // v4.1 Sphere Scale - scale particles towards/away from center
         finalPosition *= uSphereScale;
+        
+        // v4.3 Containment - keep particles within radius
+        if (uContainmentStrength > 0.0) {
+            float dist = length(finalPosition);
+            if (dist > uContainmentRadius) {
+                // Smoothly pull particles back toward the containment radius
+                float excess = dist - uContainmentRadius;
+                float pullStrength = smoothstep(0.0, 1.0, excess / uContainmentRadius) * uContainmentStrength;
+                finalPosition = normalize(finalPosition) * mix(dist, uContainmentRadius, pullStrength);
+            }
+        }
         
         vDistToCenter = length(finalPosition);
 

@@ -87,7 +87,10 @@ export class UnitSphere {
                 uVortexCount: { value: 5.0 },
                 uVortexStrength: { value: 1.0 },
                 uVortexSpeed: { value: 0.5 },
-                uVortexTilt: { value: 0.0 }
+                uVortexTilt: { value: 0.0 },
+                // v4.3 Containment
+                uContainmentRadius: { value: 1.5 },
+                uContainmentStrength: { value: 0.0 }
             },
             transparent: true,
             depthTest: false,
@@ -240,6 +243,10 @@ export class UnitSphere {
         if (params.vortexStrength !== undefined) u.uVortexStrength.value = params.vortexStrength;
         if (params.vortexSpeed !== undefined) u.uVortexSpeed.value = params.vortexSpeed;
         if (params.vortexTilt !== undefined) u.uVortexTilt.value = params.vortexTilt;
+
+        // v4.3 Containment
+        if (params.containmentRadius !== undefined) u.uContainmentRadius.value = params.containmentRadius;
+        if (params.containmentStrength !== undefined) u.uContainmentStrength.value = params.containmentStrength;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;

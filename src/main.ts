@@ -166,7 +166,10 @@ const params = {
     vortexCount: 5,
     vortexStrength: 1.0,
     vortexSpeed: 0.5,
-    vortexTilt: 0.0
+    vortexTilt: 0.0,
+    // v4.3 Containment
+    containmentRadius: 1.5,
+    containmentStrength: 0.0
 };
 
 // UI: dat.GUI Setup
@@ -270,6 +273,11 @@ vortexFolder.add(params, 'vortexCount', 1, 12).step(1).name('Кол-во пот�
 vortexFolder.add(params, 'vortexStrength', 0.0, 3.0).name('Сила вращения').onChange(v => sphere.setParams({ vortexStrength: v }));
 vortexFolder.add(params, 'vortexSpeed', 0.0, 2.0).name('Скорость').onChange(v => sphere.setParams({ vortexSpeed: v }));
 vortexFolder.add(params, 'vortexTilt', 0.0, 1.57).name('Наклон оси').onChange(v => sphere.setParams({ vortexTilt: v }));
+
+// v4.3 Containment (Keep particles cohesive)
+const containFolder = gui.addFolder('▼ 1.5 Удержание (Containment)');
+containFolder.add(params, 'containmentRadius', 0.5, 5.0).name('Радиус').onChange(v => sphere.setParams({ containmentRadius: v }));
+containFolder.add(params, 'containmentStrength', 0.0, 1.0).name('Сила').onChange(v => sphere.setParams({ containmentStrength: v }));
 
 // ... (Other folders remain) ...
 
