@@ -154,16 +154,23 @@ centerFolder.add(params, 'stripsOpacity', 0, 1.0).name('Непрозрачнос
 centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChange(v => sphere.setParams({ stripsColor: v }));
 
 
-const logicFolder = gui.addFolder('▼ 1.1 Логика (Loop)');
-logicFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат').listen();
-logicFolder.add(params, 'loopActive').name('Зациклить').onChange(v => sphere.setParams({ loopActive: v }));
-logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность (сек)').onChange(v => sphere.setParams({ loopDuration: v }));
+
+const logicFolder = gui.addFolder('▼ 1.1 Поведение (Logic)');
+logicFolder.add(params, 'loopActive').name('Режим Лупа').onChange(v => sphere.setParams({ loopActive: v }));
+// logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность').onChange(v => sphere.setParams({ loopDuration: v })); // Moved to Export
 
 const chaosFolder = gui.addFolder('▼ 1.2 Хаос (Life)');
-chaosFolder.add(params, 'chaosAmplitude', 0.0, 2.0).name('Амплитуда').onChange(v => sphere.setParams({ chaosAmplitude: v }));
+chaosFolder.add(params, 'chaosAmplitude', 0.0, 2.0).name('Амплитуда/Искажение').onChange(v => sphere.setParams({ chaosAmplitude: v }));
 chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChange(v => sphere.setParams({ chaosSpeed: v }));
 
-logicFolder.add({
+// ... (Other folders remain) ...
+
+const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
+exportFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат (Codec)').listen();
+exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
+exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
+
+exportFolder.add({
     exportLoop: async () => {
         // Export Loop Logic
         const fps = parseInt(params.exportFps.toString());
@@ -192,7 +199,7 @@ logicFolder.add({
 
         // Capture state once
         const baseParams = JSON.parse(JSON.stringify(params));
-        // Ensure loop is active in render params just in case (though we trust the GUI params)
+        // Force loop active for this render
         baseParams.loopActive = true;
         baseParams.loopDuration = duration;
 
@@ -250,7 +257,8 @@ logicFolder.add({
         if (!isRenderingCancelled) statusEl.innerText = 'Экспорт лупа завершен';
 
     }
-}, 'exportLoop').name('🎥 ЭКСПОРТ ЛУПА (4K)');
+}, 'exportLoop').name('🔴 СТАРТ РЕНДЕРА (Loop)');
+exportFolder.open();
 
 
 const matFolder = gui.addFolder('▼ 2. Материал');
@@ -281,8 +289,7 @@ swirlFolder.add(params, 'twistAmount', -5.0, 5.0).name('Закручивание
 swirlFolder.add(params, 'swirlDetail', 1, 8).step(1).name('Детализация').onChange(v => sphere.setParams({ swirlDetail: v }));
 swirlFolder.add(params, 'clusterIntensity', 1.0, 10.0).name('Свечение').onChange(v => sphere.setParams({ clusterIntensity: v }));
 
-const exportFolder = gui.addFolder('▼ 6. Экспорт');
-exportFolder.add(params, 'exportFps', [24, 30, 60]).name('FPS');
+
 
 const morphFolder = gui.addFolder('▼ 7. Морфинг');
 morphFolder.add(params, 'morphTarget', { Сфера: 0, Куб: 1, Тор: 2 }).name('Цель').onChange(v => sphere.setParams({ morphTarget: parseInt(v) }));
