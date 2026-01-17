@@ -79,7 +79,11 @@ function createWindow() {
                 ]);
 
             // Audio Mixing Logic
-            if (audioPath) {
+            // Audio Mixing Logic
+            // If WebM + maxSize is set (Sticker Mode), we DISABLE audio entirely to save size
+            const isStickerMode = (format === 'webm' && options.maxSize);
+
+            if (audioPath && !isStickerMode) {
                 console.log('Attaching audio:', audioPath);
                 command
                     .input(audioPath)
@@ -106,21 +110,29 @@ function createWindow() {
                     '-cpu-used 4'
                 ];
 
-                if (options.maxSize && options.duration) {
-                    // Calculate bitrate for target size (e.g. 256KB)
-                    // Size (KB) * 8192 (bits per KB) / Duration
-                    // Safety margin 90%
-                    const fileSizeBytes = options.maxSize * 1024;
-                    const targetBitrate = Math.floor((fileSizeBytes * 8) / options.duration * 0.9);
+                if (options.maxSize) {
+                    // Safety Default: If duration is 0/missing, assume 10s worst case to prevent huge files
+                    // This ensures that "Optimization" always triggers if options.maxSize is present
+                    const safeDuration = options.duration || 10.0;
 
-                    console.log(`Optimizing for ${options.maxSize}KB. Duration: ${options.duration}s. Target bitrate: ${targetBitrate} bps`);
+                    // Bits Available
+                    // Target: 250KB (leave 6KB margin for container)
+                    const fileSizeBytes = 250 * 1024;
+                    const availableBits = fileSizeBytes * 8;
 
-                    opts.push(`-b:v ${targetBitrate}`);
-                    opts.push(`-minrate ${Math.floor(targetBitrate * 0.7)}`);
-                    opts.push(`-maxrate ${Math.floor(targetBitrate * 1.2)}`);
-                    opts.push(`-bufsize ${Math.floor(targetBitrate * 2)}`); // 2s buffer
-                    // Remove fixed CRF or set high boundaries?
-                    // VP9 with bitrate usually needs -b:v set.
+                    // Target Bitrate
+                    // Safety Margin 85% to acccount for overhead/spikes
+                    const targetBitrate = Math.floor((availableBits / safeDuration) * 0.85);
+
+                    // Floor at 10kbps (extremely low, but necessary for long clips)
+                    const safeBitrate = Math.max(targetBitrate, 10000);
+
+                    console.log(`[FFMPEG] Sticker Mode: Limit=250KB, Dur=${safeDuration}s, Target=${safeBitrate}bps`);
+
+                    opts.push(`-b:v ${safeBitrate}`);
+                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.5)}`);
+                    opts.push(`-maxrate ${Math.floor(safeBitrate * 1.5)}`);
+                    opts.push(`-bufsize ${Math.floor(safeBitrate * 2)}`); // 2s buffer (helps VBR)
                 } else {
                     // High Quality / Default
                     opts.push('-crf 20');
