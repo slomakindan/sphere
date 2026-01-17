@@ -69,6 +69,13 @@ export const vertexShader = `
     // v4.1 Sphere Scale
     uniform float uSphereScale;
 
+    // v4.2 Vortex Streams (Atmospheric Bands)
+    uniform bool uVortexEnabled;
+    uniform float uVortexCount;      // Number of latitude bands
+    uniform float uVortexStrength;   // Rotation strength
+    uniform float uVortexSpeed;      // Animation speed
+    uniform float uVortexTilt;       // Axis tilt (0 = horizontal bands, 1 = diagonal)
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -292,6 +299,49 @@ export const vertexShader = `
             
             // Compute density for glow (particles in convergent flows are brighter)
             density = length(flowVelocity) * 0.5;
+        }
+
+        // v4.2 Vortex Streams (Atmospheric Bands)
+        if (uVortexEnabled) {
+            // Calculate latitude-like position (apply tilt)
+            vec3 tiltedPos = pos;
+            if (uVortexTilt > 0.0) {
+                // Rotate around X axis for tilt effect
+                float tiltAngle = uVortexTilt * 0.5;
+                float cosT = cos(tiltAngle);
+                float sinT = sin(tiltAngle);
+                tiltedPos.y = pos.y * cosT - pos.z * sinT;
+                tiltedPos.z = pos.y * sinT + pos.z * cosT;
+            }
+            
+            // Get latitude (-1 to 1)
+            float latitude = tiltedPos.y / max(length(pos), 0.001);
+            
+            // Create bands based on latitude
+            float bandPhase = latitude * uVortexCount * 3.14159;
+            float bandStrength = sin(bandPhase);
+            
+            // Calculate rotation angle based on band
+            float vortexTime;
+            if (uLoopActive) {
+                float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                vortexTime = angle;
+            } else {
+                vortexTime = uTime * uVortexSpeed;
+            }
+            
+            // Alternating direction for adjacent bands
+            float rotationAngle = bandStrength * uVortexStrength * vortexTime;
+            
+            // Apply rotation around Y axis (longitude rotation)
+            float cosR = cos(rotationAngle);
+            float sinR = sin(rotationAngle);
+            vec3 rotatedPos = vec3(
+                pos.x * cosR - pos.z * sinR,
+                pos.y,
+                pos.x * sinR + pos.z * cosR
+            );
+            pos = rotatedPos;
         }
 
         if (uSwirlEnabled) {

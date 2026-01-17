@@ -160,7 +160,13 @@ const params = {
     flowOctaves: 3,
     flowTurbulence: 0.5,
     // v4.1 Sphere Scale
-    sphereScale: 0.8
+    sphereScale: 0.8,
+    // v4.2 Vortex Streams
+    vortexEnabled: false,
+    vortexCount: 5,
+    vortexStrength: 1.0,
+    vortexSpeed: 0.5,
+    vortexTilt: 0.0
 };
 
 // UI: dat.GUI Setup
@@ -256,6 +262,14 @@ flowFolder.add(params, 'flowSpeed', 0.0, 1.0).name('Скорость анима�
 flowFolder.add(params, 'flowFrequency', 0.5, 5.0).name('Частота (масштаб)').onChange(v => sphere.setParams({ flowFrequency: v }));
 flowFolder.add(params, 'flowOctaves', 1, 6).step(1).name('Слои (FBM)').onChange(v => sphere.setParams({ flowOctaves: v }));
 flowFolder.add(params, 'flowTurbulence', 0.0, 1.5).name('Турбулентность').onChange(v => sphere.setParams({ flowTurbulence: v }));
+
+// v4.2 Vortex Streams (Atmospheric Bands)
+const vortexFolder = gui.addFolder('▼ 1.4 Вихри (Vortex)');
+vortexFolder.add(params, 'vortexEnabled').name('Включить').onChange(v => sphere.setParams({ vortexEnabled: v }));
+vortexFolder.add(params, 'vortexCount', 1, 12).step(1).name('Кол-во потоков').onChange(v => sphere.setParams({ vortexCount: v }));
+vortexFolder.add(params, 'vortexStrength', 0.0, 3.0).name('Сила вращения').onChange(v => sphere.setParams({ vortexStrength: v }));
+vortexFolder.add(params, 'vortexSpeed', 0.0, 2.0).name('Скорость').onChange(v => sphere.setParams({ vortexSpeed: v }));
+vortexFolder.add(params, 'vortexTilt', 0.0, 1.57).name('Наклон оси').onChange(v => sphere.setParams({ vortexTilt: v }));
 
 // ... (Other folders remain) ...
 

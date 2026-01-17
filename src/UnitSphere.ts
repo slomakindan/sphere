@@ -81,7 +81,13 @@ export class UnitSphere {
                 uFlowOctaves: { value: 3.0 },
                 uFlowTurbulence: { value: 0.5 },
                 // v4.1 Sphere Scale
-                uSphereScale: { value: 1.0 }
+                uSphereScale: { value: 1.0 },
+                // v4.2 Vortex Streams
+                uVortexEnabled: { value: false },
+                uVortexCount: { value: 5.0 },
+                uVortexStrength: { value: 1.0 },
+                uVortexSpeed: { value: 0.5 },
+                uVortexTilt: { value: 0.0 }
             },
             transparent: true,
             depthTest: false,
@@ -227,6 +233,13 @@ export class UnitSphere {
 
         // v4.1 Sphere Scale
         if (params.sphereScale !== undefined) u.uSphereScale.value = params.sphereScale;
+
+        // v4.2 Vortex Streams
+        if (params.vortexEnabled !== undefined) u.uVortexEnabled.value = params.vortexEnabled;
+        if (params.vortexCount !== undefined) u.uVortexCount.value = params.vortexCount;
+        if (params.vortexStrength !== undefined) u.uVortexStrength.value = params.vortexStrength;
+        if (params.vortexSpeed !== undefined) u.uVortexSpeed.value = params.vortexSpeed;
+        if (params.vortexTilt !== undefined) u.uVortexTilt.value = params.vortexTilt;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;
