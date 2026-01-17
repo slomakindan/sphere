@@ -257,6 +257,53 @@ function createWindow() {
             ffmpegProcess = null;
         }
     });
+
+    // PNG Sequence Export: Select Folder
+    ipcMain.handle('select-folder', async () => {
+        const result = await dialog.showOpenDialog({
+            title: 'Select Folder for PNG Sequence',
+            properties: ['openDirectory', 'createDirectory']
+        });
+        if (result.canceled || result.filePaths.length === 0) return null;
+        return result.filePaths[0];
+    });
+
+    // PNG Sequence Export: Save Frame
+    ipcMain.handle('save-png-frame', async (event, data) => {
+        const { folderPath, filename, pixels, width, height } = data;
+        const fs = require('fs');
+        const { PNG } = require('pngjs');
+
+        try {
+            const png = new PNG({ width, height });
+
+            // pixels is RGBA, copy directly
+            for (let i = 0; i < pixels.length; i++) {
+                png.data[i] = pixels[i];
+            }
+
+            // Flip vertically (WebGL renders upside down)
+            const flipped = new PNG({ width, height });
+            for (let y = 0; y < height; y++) {
+                for (let x = 0; x < width; x++) {
+                    const srcIdx = ((height - 1 - y) * width + x) * 4;
+                    const dstIdx = (y * width + x) * 4;
+                    flipped.data[dstIdx] = png.data[srcIdx];
+                    flipped.data[dstIdx + 1] = png.data[srcIdx + 1];
+                    flipped.data[dstIdx + 2] = png.data[srcIdx + 2];
+                    flipped.data[dstIdx + 3] = png.data[srcIdx + 3];
+                }
+            }
+
+            const buffer = PNG.sync.write(flipped);
+            const filePath = require('path').join(folderPath, filename);
+            fs.writeFileSync(filePath, buffer);
+            return { success: true };
+        } catch (e) {
+            console.error('Error saving PNG frame:', e);
+            return { success: false, error: String(e) };
+        }
+    });
 }
 
 app.on('before-quit', () => {
