@@ -131,10 +131,24 @@ export class UnitSphere {
         const coreAudioScale = coreBaseScale * (1.0 + audio.bass * 2.0);
         this.coreMesh.scale.set(coreAudioScale, coreAudioScale, coreAudioScale);
 
-        // Rotation
-        this.group.rotation.y = time * 0.12;
-        this.stripsGroup.rotation.z = time * 0.25;
-        this.group.position.y = Math.sin(time * 0.4) * 0.05;
+        // Rotation & Movement
+        if (this.material.uniforms.uLoopActive.value) {
+            const duration = this.material.uniforms.uLoopDuration.value;
+            const progress = (time % duration) / duration;
+
+            // Loop Mode: Force perfect cycles
+            // Rotation: 1 full turn per loop duration
+            this.group.rotation.y = progress * Math.PI * 2.0;
+            this.stripsGroup.rotation.z = progress * Math.PI * 2.0;
+
+            // Position: 1 full sine wave
+            this.group.position.y = Math.sin(progress * Math.PI * 2.0) * 0.05;
+        } else {
+            // Standard Mode
+            this.group.rotation.y = time * 0.12;
+            this.stripsGroup.rotation.z = time * 0.25;
+            this.group.position.y = Math.sin(time * 0.4) * 0.05;
+        }
     }
 
     setParams(params: any) {
