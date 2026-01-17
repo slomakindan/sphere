@@ -154,24 +154,29 @@ export class AudioController {
     // Recording Logic
     private recorder: MediaRecorder | null = null;
     private recordedChunks: Blob[] = [];
+    private destNode: MediaStreamAudioDestinationNode | null = null;
 
     public startRecording() {
-        if (!this.mediaStreamSource) return; // Only record if using Mic/System stream
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
 
         try {
-            // We need to record the stream from the source
-            // Note: MediaStreamAudioSourceNode unfortunately doesn't export the stream directly back easily 
-            // but we kept 'stream' in useMicrophone scope. We should store it.
-            // Let's modify useMicrophone to store the stream.
-            if (this.currentStream) {
-                this.recorder = new MediaRecorder(this.currentStream);
-                this.recordedChunks = [];
-                this.recorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) this.recordedChunks.push(e.data);
-                };
-                this.recorder.start();
-                console.log('Audio recording started');
+            // "What You Hear" Recording Implementation
+            // Connect the Master Listener to a destination node
+            if (!this.destNode) {
+                this.destNode = this.audioContext.createMediaStreamDestination();
+                this.listener.getInput().connect(this.destNode);
             }
+
+            this.recorder = new MediaRecorder(this.destNode.stream);
+            this.recordedChunks = [];
+            this.recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) this.recordedChunks.push(e.data);
+            };
+            this.recorder.start();
+            console.log('Mixed Audio recording started');
+
         } catch (e) {
             console.error('Failed to start audio recording:', e);
         }
@@ -191,5 +196,5 @@ export class AudioController {
         });
     }
 
-    private currentStream: MediaStream | null = null;
+
 }
