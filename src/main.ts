@@ -635,6 +635,7 @@ window.addEventListener('keydown', (e) => {
         playPauseBtn.innerText = playing ? '|| Pause' : '▶ Play';
     }
 });
+sphere.setParams(params);
 
 animate();
 
