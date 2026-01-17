@@ -294,7 +294,8 @@ const exportActions = {
                 const remaining = perFrame * (totalFrames - (i + 1));
                 etaEl.innerText = `${Math.ceil(remaining)}s remaining`;
 
-                if (i % 5 === 0) await new Promise(r => requestAnimationFrame(r));
+                // UI Break - yield every frame for responsiveness
+                await new Promise(r => setTimeout(r, 0));
 
                 if (isRenderingCancelled) {
                     statusEl.innerText = 'Рендер отменен';
@@ -370,7 +371,8 @@ const exportActions = {
             etaEl.innerText = `${Math.ceil(remaining)}s remaining`;
 
             // UI Break
-            if (i % 5 === 0) await new Promise(r => requestAnimationFrame(r));
+            // UI Break - yield every frame for responsiveness
+            await new Promise(r => setTimeout(r, 0));
 
             if (isRenderingCancelled) {
                 statusEl.innerText = 'Рендер отменен';
