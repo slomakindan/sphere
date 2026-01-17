@@ -5,7 +5,67 @@
   --panel-bg: #0a0a0a;
   --glass-border: rgba(255, 255, 255, 0.08);
   --text-primary: #f2f4f7;
-  --sidebar-width: 340px;
+  --sidebar-width: 380px;
+  /* Widened from 340px */
+}
+
+/* ... existing body styles ... */
+
+#ui-panel {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--panel-bg);
+  border-right: 1px solid var(--glass-border);
+  padding: 40px 20px;
+  /* Reduced padding slightly */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+/* ... existing styles ... */
+
+/* dat.gui overrides */
+#gui-container {
+  margin-top: 24px;
+  width: 100%;
+  /* Ensure container fills width */
+}
+
+.dg.main {
+  width: 100% !important;
+  transition: opacity 0.1s;
+}
+
+/* Fix for cut-off dropdowns and inputs */
+.dg .c {
+  width: 60% !important;
+  /* Give more space to controls */
+}
+
+.dg .property-name {
+  width: 40% !important;
+  /* Reduce label width */
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dg li.title {
+  padding: 8px 10px !important;
+  margin-top: 10px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-left: 3px solid var(--accent-blue);
+}
+
+/* Increase specific folders height if needed */
+.dg li {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02) !important;
 }
 
 body {
@@ -251,9 +311,14 @@ select {
   width: 100% !important;
 }
 
+/* Fix layout issues */
+.dg .c {
+  width: 65% !important;
+}
+
 .dg .property-name {
-  font-size: 10px !important;
-  font-weight: 600 !important;
+  width: 35% !important;
+  padding-left: 5px !important;
 }
 
 .dg li.title {

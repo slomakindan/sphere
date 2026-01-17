@@ -115,6 +115,7 @@ const params = {
     // v2.5 Export Settings
     exportFps: 30,
     exportFormat: 'mov',
+    exportQuality: 'Medium', // High / Medium / Low
     // v3.0 Shape Morphing
     morphTarget: 0,
     morphProgress: 0.0,
@@ -167,6 +168,7 @@ chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChang
 
 const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
 exportFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат (Codec)').listen();
+exportFolder.add(params, 'exportQuality', ['High', 'Medium', 'Low']).name('Качество');
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
 
@@ -189,7 +191,8 @@ const exportActions = {
 
         // Start FFmpeg
         const format = params.exportFormat as 'mov' | 'webm';
-        const started = await sceneManager.startProResExport(4096, 4096, fps, format);
+        const quality = params.exportQuality;
+        const started = await sceneManager.startProResExport(4096, 4096, fps, format, quality);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -476,7 +479,8 @@ renderMotionBtn.addEventListener('click', async () => {
 
     // Start FFmpeg in Electron
     const format = params.exportFormat as 'mov' | 'webm';
-    const started = await sceneManager.startProResExport(4096, 4096, fps, format); // UNIT 4K
+    const quality = params.exportQuality;
+    const started = await sceneManager.startProResExport(4096, 4096, fps, format, quality); // UNIT 4K
     if (!started) {
         renderOverlay.style.display = 'none';
         return;

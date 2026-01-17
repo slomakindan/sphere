@@ -381,7 +381,7 @@ export class SceneManager {
     }
 
     // Pro Export Logic
-    public async startProResExport(width: number = 2048, height: number = 2048, fps: number = 60, format: 'mov' | 'webm' = 'mov') {
+    public async startProResExport(width: number = 2048, height: number = 2048, fps: number = 60, format: 'mov' | 'webm' = 'mov', quality: string = 'Medium') {
         if (typeof electronAPI === 'undefined') {
             alert('Desktop API not found. Are you running in Electron?');
             return false;
@@ -392,6 +392,7 @@ export class SceneManager {
             height,
             fps,
             format,
+            quality,
             filename: format === 'webm' ? `UNIT-WebM-${Date.now()}.webm` : `UNIT-ProRes-${Date.now()}.mov`
         };
 
