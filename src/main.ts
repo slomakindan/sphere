@@ -209,8 +209,12 @@ const exportActions = {
 
         // Start FFmpeg
         const format = params.exportFormat as 'mov' | 'webm';
+
+        // Sticker Logic: 512px + WebM = 256KB Limit
+        const maxSize = (size === 512 && format === 'webm') ? 256 : 0;
+
         // Pass audio path
-        const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath);
+        const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath, duration, maxSize);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -527,7 +531,10 @@ renderMotionBtn.addEventListener('click', async () => {
         case '512': size = 512; break;
     }
 
-    const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath); // Dynamic Size + Audio
+    // Sticker Logic: 512px + WebM = 256KB Limit
+    const maxSize = (size === 512 && format === 'webm') ? 256 : 0;
+
+    const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath, actualDuration, maxSize); // Dynamic Size + Audio
     if (!started) {
         renderOverlay.style.display = 'none';
         return;

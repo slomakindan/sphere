@@ -96,19 +96,38 @@ function createWindow() {
 
             if (format === 'webm') {
                 // WebM (VP9 + Alpha)
-                command.outputOptions([
+                const opts = [
                     '-c:v libvpx-vp9',
                     '-pix_fmt yuva420p',
-                    '-crf 20',      // Quality (15-25)
-                    '-b:v 0',       // Ensure CRF usage
                     '-auto-alt-ref 0', // Alpha transparency support
-                    '-b:v 0',       // Ensure CRF usage
-                    '-auto-alt-ref 0', // Alpha transparency support
-                    '-threads 4',    // Speed up VP9
-                    '-row-mt 1',     // Row-based multithreading
-                    '-deadline realtime', // Faster encoding (less CPU choke)
-                    '-cpu-used 4'    // Speed vs Quality trigger (0-5 for realtime)
-                ]);
+                    '-threads 4',
+                    '-row-mt 1',
+                    '-deadline realtime',
+                    '-cpu-used 4'
+                ];
+
+                if (options.maxSize && options.duration) {
+                    // Calculate bitrate for target size (e.g. 256KB)
+                    // Size (KB) * 8192 (bits per KB) / Duration
+                    // Safety margin 90%
+                    const fileSizeBytes = options.maxSize * 1024;
+                    const targetBitrate = Math.floor((fileSizeBytes * 8) / options.duration * 0.9);
+
+                    console.log(`Optimizing for ${options.maxSize}KB. Duration: ${options.duration}s. Target bitrate: ${targetBitrate} bps`);
+
+                    opts.push(`-b:v ${targetBitrate}`);
+                    opts.push(`-minrate ${Math.floor(targetBitrate * 0.7)}`);
+                    opts.push(`-maxrate ${Math.floor(targetBitrate * 1.2)}`);
+                    opts.push(`-bufsize ${Math.floor(targetBitrate * 2)}`); // 2s buffer
+                    // Remove fixed CRF or set high boundaries?
+                    // VP9 with bitrate usually needs -b:v set.
+                } else {
+                    // High Quality / Default
+                    opts.push('-crf 20');
+                    opts.push('-b:v 0');
+                }
+
+                command.outputOptions(opts);
             } else {
                 // Default: ProRes 4444
                 command.outputOptions([
