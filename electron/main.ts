@@ -274,11 +274,12 @@ function createWindow() {
         return false;
     });
 
-    ipcMain.on('stop-ffmpeg-capture', () => {
+    ipcMain.handle('stop-ffmpeg-capture', async () => {
         if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed) {
             ffmpegProcess.stdin.end();
             ffmpegProcess = null;
         }
+        return true;
     });
 
     // PNG Sequence Export: Select Folder
