@@ -207,9 +207,15 @@ export const vertexShader = `
         float density = 0.0;
 
         if (uSwirlEnabled) {
+            // 1. Initial Volumetric Scattering (Make it a cloud, not a shell)
+            // Use static noise based on initial position to scatter particles radially
+            float staticNoise = snoise(pos * 30.0);
+            float volumeSpread = 1.0; // Spread width
+            // Original radius is 1.5. Scatter between 0.5 and 2.5
+            pos = normalize(pos) * (1.5 + staticNoise * volumeSpread);
+
+            // 2. Chaotic Rotation
             float dist = length(pos);
-            
-            // 1. Chaotic Rotation (Super 3D)
             if (uOrbitChaos > 0.0) {
                  float chaosAngle = uTime * uOrbitChaos * 0.5 + dist * uTwistAmount;
                  vec3 randomAxis = normalize(vec3(
@@ -219,20 +225,21 @@ export const vertexShader = `
                  ));
                  pos = rotateAxis(pos, randomAxis, chaosAngle);
             } else {
-                 // Standard Y-axis rotation
                  float angle = uTime * uSwirlSpeed + dist * uTwistAmount;
                  pos = rotateY(pos, angle);
             }
 
-            // 2. Black Hole Effect: Spherical Expansion (Event Horizon)
+            // 3. Black Hole Effect: Hard Event Horizon
+            // Ensure NO particle is closer than uVoidRadius
             if (uVoidRadius > 0.0) {
-               float r = length(pos);
-               if (r > 0.001) {
-                   // Push particles radially out from center
-                   pos = normalize(pos) * (r + uVoidRadius);
-               }
-               dist = length(pos); // Update distance
+                float currentR = length(pos);
+                if (currentR < uVoidRadius) {
+                    // Push particles out to the edge of the void
+                    // Add some noise so they don't all stick to the exact surface
+                    pos = normalize(pos) * (uVoidRadius + abs(staticNoise) * 0.5); 
+                }
             }
+            dist = length(pos); // Final distance
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
             vDensity = max(0.0, density) * uClusterIntensity;
             noise = fbm(pos * uNoiseDensity + vec3(uTime * uSpeed), uOctaves, uNoiseScale);
