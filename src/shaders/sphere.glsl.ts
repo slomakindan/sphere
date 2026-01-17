@@ -249,7 +249,21 @@ export const vertexShader = `
         
         vNoise = noise;
 
-        float mask = snoise(normal * uSpotScale + vec3(uTime * 0.1));
+        vNoise = noise;
+        
+        // v3.4 Seamless Color Spots
+        vec3 spotPos;
+        if (uLoopActive) {
+            float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+            // Use different radius/offset for spots to avoid looking exactly like the shape noise
+            float radius = uLoopDuration * 0.1; 
+            vec3 loopOffset = vec3(cos(angle), sin(angle), 0.0) * radius;
+            spotPos = normal * uSpotScale + loopOffset;
+        } else {
+            spotPos = normal * uSpotScale + vec3(uTime * 0.1);
+        }
+
+        float mask = snoise(spotPos);
         vColorMask = smoothstep(uSpotThreshold, uSpotThreshold + 0.3, (mask + 1.0) * 0.5);
         vAccent = smoothstep(0.2, 0.8, noise) * (0.5 + uTreble * 1.5);
 
