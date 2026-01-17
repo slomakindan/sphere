@@ -13,7 +13,6 @@ export const vertexShader = `
     uniform float uSwirlSpeed;
     uniform float uTwistAmount;
     uniform float uSwirlDetail;
-    uniform float uSwirlDetail;
     uniform float uClusterIntensity;
     uniform float uVoidRadius; // NEW: Black hole radius
     
