@@ -160,7 +160,7 @@ document.getElementById('gui-container')?.appendChild(gui.domElement);
 
 // 1. Center Interface (Core) - at top, disabled by default
 const centerFolder = gui.addFolder('▼ 1. Центр');
-centerFolder.add(params, 'sphereDetail', { 'Low (50)': 50, 'Mid (100)': 100, 'High (150)': 150, 'Extreme (200)': 200, 'Ultra (300)': 300 }).name('Плотность точек').onChange(v => {
+centerFolder.add(params, 'sphereDetail', { 'Minimal (25)': 25, 'Low (50)': 50, 'Mid (100)': 100, 'High (150)': 150, 'Extreme (200)': 200, 'Ultra (300)': 300 }).name('Плотность точек').onChange(v => {
     sphere.rebuildGeometry(parseInt(v));
 });
 centerFolder.add(params, 'showCore').name('Ядро').onChange(v => sphere.setParams({ showCore: v }));
