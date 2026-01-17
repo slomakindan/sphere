@@ -170,7 +170,8 @@ exportFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат (Co
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
 
-exportFolder.add({
+
+const exportActions = {
     exportLoop: async () => {
         // Export Loop Logic
         const fps = parseInt(params.exportFps.toString());
@@ -256,9 +257,19 @@ exportFolder.add({
         isRenderingCancelled = false;
         if (!isRenderingCancelled) statusEl.innerText = 'Экспорт лупа завершен';
 
+    },
+    renderMotion: () => {
+        if (motionController.getBuffer().length === 0) {
+            alert('Сначала запишите движение (Capture Motion)!');
+            return;
+        }
+        renderMotionBtn.click();
     }
-}, 'exportLoop').name('🔴 СТАРТ РЕНДЕРА (Loop)');
-exportFolder.open();
+};
+
+exportFolder.add(exportActions, 'renderMotion').name('🎬 РЕНДЕР ЗАПИСИ (Motion)');
+exportFolder.add(exportActions, 'exportLoop').name('🔴 РЕНДЕР ЛУПА (Spectacle)');
+
 
 
 const matFolder = gui.addFolder('▼ 2. Материал');
