@@ -105,36 +105,42 @@ function createWindow() {
                     '-pix_fmt yuva420p',
                     '-auto-alt-ref 0', // Alpha transparency support
                     '-threads 4',
-                    '-row-mt 1',
-                    '-deadline realtime',
-                    '-cpu-used 4'
+                    '-row-mt 1'
                 ];
 
                 if (options.maxSize) {
-                    // Safety Default: If duration is 0/missing, assume 10s worst case to prevent huge files
-                    // This ensures that "Optimization" always triggers if options.maxSize is present
+                    // ULTRA-AGGRESSIVE MODE: Force 250KB or less
                     const safeDuration = options.duration || 10.0;
 
-                    // Bits Available
-                    // Target: 250KB (leave 6KB margin for container)
-                    const fileSizeBytes = 250 * 1024;
-                    const availableBits = fileSizeBytes * 8;
+                    // Target: 240KB to leave room for container overhead
+                    const targetBytes = 240 * 1024;
+                    const totalBits = targetBytes * 8;
 
-                    // Target Bitrate
-                    // Safety Margin 85% to acccount for overhead/spikes
-                    const targetBitrate = Math.floor((availableBits / safeDuration) * 0.85);
+                    // Use only 65% of theoretical bitrate to account for:
+                    // - VP9 VBR spikes
+                    // - Container overhead
+                    // - Keyframe size spikes
+                    const conservativeBitrate = Math.floor((totalBits / safeDuration) * 0.65);
+                    const safeBitrate = Math.max(conservativeBitrate, 8000); // absolute floor
 
-                    // Floor at 10kbps (extremely low, but necessary for long clips)
-                    const safeBitrate = Math.max(targetBitrate, 10000);
+                    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                    console.log(`[STICKER MODE ACTIVE]`);
+                    console.log(`Target: 240KB | Duration: ${safeDuration}s`);
+                    console.log(`Video Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
+                    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-                    console.log(`[FFMPEG] Sticker Mode: Limit=250KB, Dur=${safeDuration}s, Target=${safeBitrate}bps`);
-
+                    // STRICT constraints
+                    opts.push('-quality good'); // Better compression than realtime
+                    opts.push('-cpu-used 5'); // Fast but allows decent compression
                     opts.push(`-b:v ${safeBitrate}`);
-                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.5)}`);
-                    opts.push(`-maxrate ${Math.floor(safeBitrate * 1.5)}`);
-                    opts.push(`-bufsize ${Math.floor(safeBitrate * 2)}`); // 2s buffer (helps VBR)
+                    opts.push(`-maxrate ${safeBitrate}`); // HARD ceiling
+                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.3)}`); // Allow lower for simple frames
+                    opts.push(`-bufsize ${Math.floor(safeBitrate * 1.5)}`); // Tight buffer
+                    opts.push('-g 120'); // Keyframe every 4s @ 30fps
                 } else {
                     // High Quality / Default
+                    opts.push('-deadline realtime');
+                    opts.push('-cpu-used 4');
                     opts.push('-crf 20');
                     opts.push('-b:v 0');
                 }
