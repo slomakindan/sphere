@@ -339,17 +339,19 @@ export const vertexShader = `
         vDistToCenter = length(finalPosition);
 
 
-        vec4 modelPosition = modelMatrix * vec4(finalPosition, 1.0);
-        vec4 viewPosition = viewMatrix * modelPosition;
+        // Calculate View Position using standard modelViewMatrix
+        vec4 viewPosition = modelViewMatrix * vec4(finalPosition, 1.0);
 
         // v3.5 View Clearing (Applies to all modes)
         if (uViewClear > 0.0) {
-             vec4 centerViewPos = viewMatrix * modelMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+             // Calculate Center in View Space
+             vec4 centerViewPos = modelViewMatrix * vec4(0.0, 0.0, 0.0, 1.0);
              float viewDist = length(viewPosition.xy - centerViewPos.xy);
              
              // Check if inside clear zone AND in front of the sphere center
              if (viewDist < uViewClear && viewPosition.z > centerViewPos.z) {
                  vec2 pushDir = normalize(viewPosition.xy - centerViewPos.xy);
+                 // Safety for exact center
                  if (length(viewPosition.xy - centerViewPos.xy) < 0.001) pushDir = vec2(1.0, 0.0);
                  
                  // Push to edge
