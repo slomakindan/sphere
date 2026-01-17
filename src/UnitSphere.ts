@@ -60,7 +60,10 @@ export class UnitSphere {
                 uImageMorphFactor: { value: 0.0 },
                 uImageDisplacementFactor: { value: 0.0 },
                 uImageColorMix: { value: 0.0 },
-                uImageEnabled: { value: false }
+                uImageEnabled: { value: false },
+                // v3.2 Loop Mode
+                uLoopActive: { value: false },
+                uLoopDuration: { value: 10.0 }
             },
             transparent: true,
             depthTest: false,
@@ -186,6 +189,11 @@ export class UnitSphere {
         if (params.imageMorphFactor !== undefined) u.uImageMorphFactor.value = params.imageMorphFactor;
         if (params.imageDisplacementFactor !== undefined) u.uImageDisplacementFactor.value = params.imageDisplacementFactor;
         if (params.imageColorMix !== undefined) u.uImageColorMix.value = params.imageColorMix;
+
+        // v3.2 Loop Mode
+        if (params.loopActive !== undefined) u.uLoopActive.value = params.loopActive;
+        if (params.loopDuration !== undefined) u.uLoopDuration.value = params.loopDuration;
+
 
         // Center Interface Control
         const coreU = (this.coreMesh.material as THREE.ShaderMaterial).uniforms;

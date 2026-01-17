@@ -129,7 +129,10 @@ const params = {
     imageEnabled: false,
     imageMorphFactor: 0.0,
     imageDisplacementFactor: 0.0,
-    imageColorMix: 0.0
+    imageColorMix: 0.0,
+    // v3.2 Loop
+    loopActive: false,
+    loopDuration: 10.0
 };
 
 // UI: dat.GUI Setup
@@ -145,6 +148,11 @@ centerFolder.add(params, 'coreIntensity', 0, 5.0).name('Интенсивност
 centerFolder.add(params, 'showStrips').name('Полосы').onChange(v => sphere.setParams({ showStrips: v }));
 centerFolder.add(params, 'stripsOpacity', 0, 1.0).name('Непрозрачность').onChange(v => sphere.setParams({ stripsOpacity: v }));
 centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChange(v => sphere.setParams({ stripsColor: v }));
+
+const logicFolder = gui.addFolder('▼ 1.1 Логика (Loop)');
+logicFolder.add(params, 'loopActive').name('Зациклить').onChange(v => sphere.setParams({ loopActive: v }));
+logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность (сек)').onChange(v => sphere.setParams({ loopDuration: v }));
+
 
 const matFolder = gui.addFolder('▼ 2. Материал');
 matFolder.addColor(params, 'baseColor').name('Базовый цвет').onChange(v => sphere.setParams({ baseColor: v }));

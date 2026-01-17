@@ -45,6 +45,11 @@ export const vertexShader = `
     
     uniform vec2 uSizeRange;
     uniform vec2 uResolution;
+    
+    // v3.2 Loop Mode
+    uniform bool uLoopActive;
+    uniform float uLoopDuration;
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -202,6 +207,18 @@ export const vertexShader = `
         } else {
             float dynamicTime = uTime * (uSpeed + uBass * 0.4 * uAudioInfluence) + 0.123;
             vec3 noisePos = normal * uNoiseDensity + vec3(dynamicTime);
+
+            // v3.2 Seamless Loop Mode
+            if (uLoopActive) {
+                float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                // Calculate radius to match perceived speed: Length = Speed * Duration
+                // Circle Circumference (2*PI*R) = Speed * Duration => R = (Speed * Duration) / 2PI
+                // We use a predefined radius multiplier for strong visual movement
+                float radius = uLoopDuration * uSpeed * 0.5; 
+                vec3 loopOffset = vec3(cos(angle), sin(angle), cos(angle) * 0.5 + sin(angle) * 0.5) * radius;
+                noisePos = normal * uNoiseDensity + loopOffset;
+            }
+
             noise = fbm(noisePos, uOctaves, uNoiseScale);
             vDensity = 0.0;
         }
