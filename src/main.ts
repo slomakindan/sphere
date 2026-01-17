@@ -175,7 +175,7 @@ chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChang
 // ... (Other folders remain) ...
 
 const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
-exportFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат (Codec)').listen();
+exportFolder.add(params, 'exportFormat', ['mov', 'webm', 'apng']).name('Формат (Codec)').listen();
 exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p', '512']).name('Разрешение');
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
@@ -208,13 +208,14 @@ const exportActions = {
         }
 
         // Start FFmpeg
-        const format = params.exportFormat as 'mov' | 'webm';
+        const format = params.exportFormat as 'mov' | 'webm' | 'apng';
 
-        // Sticker Logic: 512px + WebM = 256KB Limit
-        const maxSize = (size === 512 && format === 'webm') ? 256 : 0;
+        // Sticker Logic: 512px + APNG = 250KB Limit
+        const maxSize = (size === 512 && format === 'apng') ? 250 : 0;
 
-        // Pass audio path
-        const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath, duration, maxSize);
+        // Pass audio path (APNG doesn't support audio)
+        const audioPath = (format === 'apng') ? null : currentAudioPath;
+        const started = await sceneManager.startProResExport(size, size, fps, format, audioPath, duration, maxSize);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -519,7 +520,7 @@ renderMotionBtn.addEventListener('click', async () => {
 
 
     // Start FFmpeg in Electron
-    const format = params.exportFormat as 'mov' | 'webm';
+    const format = params.exportFormat as 'mov' | 'webm' | 'apng';
 
     // Resolution Logic
     let size = 1080;
@@ -531,10 +532,12 @@ renderMotionBtn.addEventListener('click', async () => {
         case '512': size = 512; break;
     }
 
-    // Sticker Logic: 512px + WebM = 256KB Limit
-    const maxSize = (size === 512 && format === 'webm') ? 256 : 0;
+    // Sticker Logic: 512px + APNG = 250KB Limit
+    const maxSize = (size === 512 && format === 'apng') ? 250 : 0;
 
-    const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath, actualDuration, maxSize); // Dynamic Size + Audio
+    // APNG doesn't support audio
+    const audioPath = (format === 'apng') ? null : currentAudioPath;
+    const started = await sceneManager.startProResExport(size, size, fps, format, audioPath, actualDuration, maxSize); // Dynamic Size + Audio
     if (!started) {
         renderOverlay.style.display = 'none';
         return;

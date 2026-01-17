@@ -57,15 +57,25 @@ function createWindow() {
         width = Math.floor(width / 2) * 2;
         height = Math.floor(height / 2) * 2;
 
+        // Dialog title and filters based on format
+        let title = 'Save Video';
+        let filters: any[] = [];
+
+        if (format === 'apng') {
+            title = 'Save APNG Animation';
+            filters = [{ name: 'APNG', extensions: ['png'] }];
+        } else if (format === 'webm') {
+            title = 'Save WebM Video';
+            filters = [{ name: 'WebM Video', extensions: ['webm'] }];
+        } else {
+            title = 'Save ProRes Video';
+            filters = [{ name: 'Movies', extensions: ['mov'] }];
+        }
 
         const { filePath } = await dialog.showSaveDialog({
-            title: format === 'webm' ? 'Save WebM Video' : 'Save ProRes Video',
-            defaultPath: filename || (format === 'webm' ? `UNIT-Capture-${Date.now()}.webm` : `UNIT-Capture-${Date.now()}.mov`),
-            filters: [
-                format === 'webm'
-                    ? { name: 'WebM Video', extensions: ['webm'] }
-                    : { name: 'Movies', extensions: ['mov'] }
-            ]
+            title,
+            defaultPath: filename,
+            filters
         });
 
         if (!filePath) return null;
@@ -109,7 +119,31 @@ function createWindow() {
 
             command.output(filePath);
 
-            if (format === 'webm') {
+            if (format === 'apng') {
+                // APNG (Animated PNG with transparency)
+                const opts = [
+                    '-f', 'apng',
+                    '-plays', '0'
+                ];
+
+                if (options.maxSize) {
+                    // APNG compression for 250KB target
+                    const targetKB = 250;
+                    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+                    console.log(`[STICKER MODE - APNG]`);
+                    console.log(`Target: ${targetKB}KB`);
+                    console.log(`Format: APNG (native transparency)`);
+                    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+
+                    // Compression level (0-9, higher = smaller but slower)
+                    opts.push('-compression_level', '9');
+                    opts.push('-pred', 'mixed'); // Best prediction for animation
+                } else {
+                    opts.push('-compression_level', '6');
+                }
+
+                command.outputOptions(opts);
+            } else if (format === 'webm') {
                 // WebM (VP9 + Alpha)
                 const opts = [
                     '-c:v libvpx-vp9',
@@ -151,7 +185,7 @@ function createWindow() {
                 }
 
                 command.outputOptions(opts);
-            } else {
+            } else if (format === 'mov') { // Explicitly handle ProRes for 'mov' format
                 // Default: ProRes 4444
                 command.outputOptions([
                     '-c:v prores_ks',
