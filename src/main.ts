@@ -152,6 +152,93 @@ centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChang
 const logicFolder = gui.addFolder('▼ 1.1 Логика (Loop)');
 logicFolder.add(params, 'loopActive').name('Зациклить').onChange(v => sphere.setParams({ loopActive: v }));
 logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность (сек)').onChange(v => sphere.setParams({ loopDuration: v }));
+logicFolder.add({
+    exportLoop: async () => {
+        // Export Loop Logic
+        const fps = parseInt(params.exportFps.toString());
+        const duration = params.loopDuration;
+        const totalFrames = Math.ceil(duration * fps);
+
+        if (totalFrames <= 0) return;
+
+        setAppState('RENDERING');
+        isRenderingCancelled = false;
+        stopRenderBtn.disabled = false;
+        statusEl.innerText = `Рендер лупа ${duration.toFixed(1)}с @ ${fps}fps...`;
+        renderOverlay.style.display = 'flex';
+        totalFramesEl.innerText = totalFrames.toString();
+
+        // Start FFmpeg
+        const started = await sceneManager.startProResExport(4096, 4096);
+        if (!started) {
+            renderOverlay.style.display = 'none';
+            setAppState('IDLE');
+            return;
+        }
+
+        const startTime = performance.now();
+
+        // Capture state once
+        const baseParams = JSON.parse(JSON.stringify(params));
+        // Ensure loop is active in render params just in case (though we trust the GUI params)
+        baseParams.loopActive = true;
+        baseParams.loopDuration = duration;
+
+        // Use current camera
+        const cameraState = {
+            position: { x: sceneManager.camera.position.x, y: sceneManager.camera.position.y, z: sceneManager.camera.position.z },
+            target: { x: sceneManager.controls.target.x, y: sceneManager.controls.target.y, z: sceneManager.controls.target.z }
+        };
+
+        /**
+         * RENDER LOOP
+         */
+        for (let i = 0; i < totalFrames; i++) {
+            const t = (i / fps);
+
+            // Construct synthetic frame
+            const frame = {
+                time: t,
+                audio: { level: 0, bass: 0, mid: 0, treble: 0 }, // Silence for loop visual check
+                params: baseParams,
+                camera: cameraState
+            };
+
+            // Render 4K Frame
+            const pixels = await sceneManager.renderMotionFrame(frame, 4096);
+
+            // Send to FFmpeg
+            await sceneManager.sendFrame(pixels);
+
+            // Update UI
+            const progress = ((i + 1) / totalFrames) * 100;
+            progressFill.style.width = `${progress}%`;
+            currentFrameEl.innerText = (i + 1).toString();
+
+            // ETA
+            const elapsed = (performance.now() - startTime) / 1000;
+            const perFrame = elapsed / (i + 1);
+            const remaining = perFrame * (totalFrames - (i + 1));
+            etaEl.innerText = `${Math.ceil(remaining)}s remaining`;
+
+            // UI Break
+            if (i % 5 === 0) await new Promise(r => requestAnimationFrame(r));
+
+            if (isRenderingCancelled) {
+                statusEl.innerText = 'Рендер отменен';
+                break;
+            }
+        }
+
+        sceneManager.stopProResExport();
+        setAppState('IDLE');
+        renderOverlay.style.display = 'none';
+        stopRenderBtn.disabled = true;
+        isRenderingCancelled = false;
+        if (!isRenderingCancelled) statusEl.innerText = 'Экспорт лупа завершен';
+
+    }
+}, 'exportLoop').name('🎥 ЭКСПОРТ ЛУПА (4K)');
 
 
 const matFolder = gui.addFolder('▼ 2. Материал');
