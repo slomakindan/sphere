@@ -120,32 +120,28 @@ function createWindow() {
                 ];
 
                 if (options.maxSize) {
-                    // EXTREME CBR: Accounting for WebM 500%+ overhead
+                    // HARD LIMIT: Use FFmpeg's -fs flag to enforce file size
+                    const targetKB = 250;
+
+                    // Still set a reasonable bitrate to avoid encoding forever
                     const safeDuration = options.duration || 10.0;
-
-                    // Target only 35KB raw video (for 200KB final with overhead)
-                    const rawTargetBytes = 35 * 1024;
-                    const totalBits = rawTargetBytes * 8;
-
-                    // Use 100% of raw target (no margin needed, overhead is the margin)
-                    const targetBitrate = Math.floor(totalBits / safeDuration);
-                    const safeBitrate = Math.max(targetBitrate, 5000);
+                    const estimatedBitrate = Math.floor((targetKB * 8192) / safeDuration * 0.3);
+                    const safeBitrate = Math.max(estimatedBitrate, 30000);
 
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                    console.log(`[STICKER MODE - EXTREME LOW]`);
-                    console.log(`Target: 35KB raw (200KB with WebM overhead)`);
+                    console.log(`[STICKER MODE - HARD LIMIT]`);
+                    console.log(`Hard Limit: ${targetKB}KB (FFmpeg -fs)`);
                     console.log(`Duration: ${safeDuration}s`);
-                    console.log(`Ultra-low Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
+                    console.log(`Guide Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-                    // Extreme CBR
+                    // Use -fs to hard-limit file size
                     opts.push('-deadline good');
                     opts.push('-cpu-used 4');
                     opts.push(`-b:v ${safeBitrate}`);
-                    opts.push(`-minrate ${safeBitrate}`);
                     opts.push(`-maxrate ${safeBitrate}`);
-                    opts.push(`-bufsize ${Math.floor(safeBitrate * 2)}`);
-                    opts.push('-g 240'); // Large keyframe interval to reduce overhead
+                    opts.push('-g 240');
+                    opts.push(`-fs ${targetKB}K`); // HARD FILE SIZE LIMIT
                 } else {
                     // High Quality / Default
                     opts.push('-deadline realtime');
