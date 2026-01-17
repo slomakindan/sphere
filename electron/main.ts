@@ -102,7 +102,12 @@ function createWindow() {
                     '-crf 20',      // Quality (15-25)
                     '-b:v 0',       // Ensure CRF usage
                     '-auto-alt-ref 0', // Alpha transparency support
-                    '-threads 4'    // Speed up VP9
+                    '-b:v 0',       // Ensure CRF usage
+                    '-auto-alt-ref 0', // Alpha transparency support
+                    '-threads 4',    // Speed up VP9
+                    '-row-mt 1',     // Row-based multithreading
+                    '-deadline realtime', // Faster encoding (less CPU choke)
+                    '-cpu-used 4'    // Speed vs Quality trigger (0-5 for realtime)
                 ]);
             } else {
                 // Default: ProRes 4444
