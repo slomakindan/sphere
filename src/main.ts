@@ -384,10 +384,6 @@ const exportActions = {
         baseParams.loopActive = true;
         baseParams.loopDuration = duration;
 
-        // Auto-fill frame: Scale sphere to fill ~85% of frame regardless of current sphereScale
-        // This ensures the sphere fills the export even if it's small in preview
-        baseParams.sphereScale = 0.85;
-
         // Use current camera
         const cameraState = {
             position: { x: sceneManager.camera.position.x, y: sceneManager.camera.position.y, z: sceneManager.camera.position.z },
