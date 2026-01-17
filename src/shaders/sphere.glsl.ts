@@ -58,6 +58,14 @@ export const vertexShader = `
     uniform float uChaosAmplitude;
     uniform float uChaosSpeed;
 
+    // v4.0 Flow Field (Curl Noise)
+    uniform bool uFlowEnabled;
+    uniform float uFlowStrength;
+    uniform float uFlowSpeed;
+    uniform float uFlowFrequency;
+    uniform float uFlowOctaves;
+    uniform float uFlowTurbulence;
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -147,6 +155,52 @@ export const vertexShader = `
         return value;
     }
 
+    // v4.0 Curl Noise for Flow Fields
+    // Computes the curl (rotation) of a 3D noise field
+    // Creates divergence-free, smooth, non-intersecting flow
+    vec3 curlNoise(vec3 p) {
+        float eps = 0.01;
+        
+        // Compute partial derivatives using central differences
+        float n1, n2;
+        vec3 curl;
+        
+        // dFz/dy - dFy/dz
+        n1 = snoise(p + vec3(0.0, eps, 0.0));
+        n2 = snoise(p - vec3(0.0, eps, 0.0));
+        float dz_dy = (n1 - n2) / (2.0 * eps);
+        
+        n1 = snoise(p + vec3(0.0, 0.0, eps));
+        n2 = snoise(p - vec3(0.0, 0.0, eps));
+        float dy_dz = (n1 - n2) / (2.0 * eps);
+        curl.x = dz_dy - dy_dz;
+        
+        // dFx/dz - dFz/dx
+        n1 = snoise(p + vec3(eps, 0.0, 0.0));
+        n2 = snoise(p - vec3(eps, 0.0, 0.0));
+        float dz_dx = (n1 - n2) / (2.0 * eps);
+        curl.y = dy_dz - dz_dx;
+        
+        // dFy/dx - dFx/dy
+        curl.z = dz_dx - dz_dy;
+        
+        return curl;
+    }
+    
+    // Multi-octave Curl Noise (Fractal Flow)
+    vec3 curlFBM(vec3 p, float octaves, float freq) {
+        vec3 sum = vec3(0.0);
+        float amp = 1.0;
+        float f = freq;
+        for (int i = 0; i < 6; i++) {
+            if (float(i) >= octaves) break;
+            sum += amp * curlNoise(p * f);
+            f *= 2.0;
+            amp *= 0.5;
+        }
+        return sum;
+    }
+
     // Swirl Rotation Helper
     vec3 rotateY(vec3 p, float angle) {
         float s = sin(angle);
@@ -207,6 +261,25 @@ export const vertexShader = `
 
         float noise = 0.0;
         float density = 0.0;
+
+        // v4.0 Flow Field (Curl Noise) - Applied before other modes
+        if (uFlowEnabled) {
+            // Get flow velocity from curl noise
+            vec3 flowPos = pos * uFlowFrequency + vec3(uTime * uFlowSpeed);
+            vec3 flowVelocity = curlFBM(flowPos, uFlowOctaves, 1.0);
+            
+            // Add turbulence layer (higher frequency noise)
+            if (uFlowTurbulence > 0.0) {
+                vec3 turbulence = curlNoise(flowPos * 4.0 + vec3(uTime * uFlowSpeed * 2.0));
+                flowVelocity += turbulence * uFlowTurbulence;
+            }
+            
+            // Displace particle along flow
+            pos += flowVelocity * uFlowStrength;
+            
+            // Compute density for glow (particles in convergent flows are brighter)
+            density = length(flowVelocity) * 0.5;
+        }
 
         if (uSwirlEnabled) {
             // 1. Initial Volumetric Scattering (Solid Ball distribution)

@@ -71,8 +71,15 @@ export class UnitSphere {
                 // v3.3 Chaos Mode
                 uChaosAmplitude: { value: 0.0 },
                 uChaosSpeed: { value: 1.0 },
-                uCameraPosition: { value: new THREE.Vector3() }, // NEW
-                uViewClear: { value: 0.0 } // NEW
+                uCameraPosition: { value: new THREE.Vector3() },
+                uViewClear: { value: 0.0 },
+                // v4.0 Flow Field
+                uFlowEnabled: { value: false },
+                uFlowStrength: { value: 0.5 },
+                uFlowSpeed: { value: 0.3 },
+                uFlowFrequency: { value: 2.0 },
+                uFlowOctaves: { value: 3.0 },
+                uFlowTurbulence: { value: 0.5 }
             },
             transparent: true,
             depthTest: false,
@@ -206,7 +213,15 @@ export class UnitSphere {
         if (params.clusterIntensity !== undefined) u.uClusterIntensity.value = params.clusterIntensity;
         if (params.voidRadius !== undefined) u.uVoidRadius.value = params.voidRadius;
         if (params.orbitChaos !== undefined) u.uOrbitChaos.value = params.orbitChaos;
-        if (params.viewClear !== undefined) u.uViewClear.value = params.viewClear; // NEW // NEW
+        if (params.viewClear !== undefined) u.uViewClear.value = params.viewClear;
+
+        // v4.0 Flow Field
+        if (params.flowEnabled !== undefined) u.uFlowEnabled.value = params.flowEnabled;
+        if (params.flowStrength !== undefined) u.uFlowStrength.value = params.flowStrength;
+        if (params.flowSpeed !== undefined) u.uFlowSpeed.value = params.flowSpeed;
+        if (params.flowFrequency !== undefined) u.uFlowFrequency.value = params.flowFrequency;
+        if (params.flowOctaves !== undefined) u.uFlowOctaves.value = params.flowOctaves;
+        if (params.flowTurbulence !== undefined) u.uFlowTurbulence.value = params.flowTurbulence;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;

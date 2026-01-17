@@ -151,7 +151,14 @@ const params = {
     sphereDetail: 100,
     voidRadius: 0.0,
     orbitChaos: 0.0,
-    viewClear: 0.0 // NEW // NEW
+    viewClear: 0.0,
+    // v4.0 Flow Field
+    flowEnabled: false,
+    flowStrength: 0.5,
+    flowSpeed: 0.3,
+    flowFrequency: 2.0,
+    flowOctaves: 3,
+    flowTurbulence: 0.5
 };
 
 // UI: dat.GUI Setup
@@ -190,6 +197,15 @@ logicFolder.add(params, 'loopActive').name('Режим Лупа').onChange(v => 
 const chaosFolder = gui.addFolder('▼ 1.2 Хаос (Life)');
 chaosFolder.add(params, 'chaosAmplitude', 0.0, 2.0).name('Амплитуда/Искажение').onChange(v => sphere.setParams({ chaosAmplitude: v }));
 chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChange(v => sphere.setParams({ chaosSpeed: v }));
+
+// v4.0 Flow Field (Curl Noise)
+const flowFolder = gui.addFolder('▼ 1.3 Поток (Flow Field)');
+flowFolder.add(params, 'flowEnabled').name('Включить').onChange(v => sphere.setParams({ flowEnabled: v }));
+flowFolder.add(params, 'flowStrength', 0.0, 2.0).name('Сила потока').onChange(v => sphere.setParams({ flowStrength: v }));
+flowFolder.add(params, 'flowSpeed', 0.0, 1.0).name('Скорость анимации').onChange(v => sphere.setParams({ flowSpeed: v }));
+flowFolder.add(params, 'flowFrequency', 0.5, 5.0).name('Частота (масштаб)').onChange(v => sphere.setParams({ flowFrequency: v }));
+flowFolder.add(params, 'flowOctaves', 1, 6).step(1).name('Слои (FBM)').onChange(v => sphere.setParams({ flowOctaves: v }));
+flowFolder.add(params, 'flowTurbulence', 0.0, 1.5).name('Турбулентность').onChange(v => sphere.setParams({ flowTurbulence: v }));
 
 // ... (Other folders remain) ...
 
