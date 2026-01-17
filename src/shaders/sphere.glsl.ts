@@ -290,6 +290,8 @@ export const fragmentShader = `
     uniform vec3 uBaseColor;
     uniform vec3 uAccentColor;
     uniform float uOpacity;
+    uniform float uTime;
+
     
     // v3.0 Visual DNA
     uniform sampler2D uImageTexture;
