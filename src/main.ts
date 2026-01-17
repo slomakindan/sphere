@@ -87,18 +87,18 @@ function formatTimecode(seconds: number, fps = 30): string {
 // Parameters (Genetic Code)
 const params = {
     baseColor: '#f2f4f7',
-    accentColor: '#ff0000',
-    spotScale: 2.0,
-    spotThreshold: 0.6,
+    accentColor: '#ffffff',
+    spotScale: 0.1,
+    spotThreshold: 0.0,
     minSize: 0.8,
     maxSize: 2.5,
-    opacity: 0.6,
-    speed: 0.2,
-    density: 1.5,
-    strength: 0.3,
-    scale: 1.0,
-    octaves: 3.0,
-    radialBias: 0.5,
+    opacity: 1.0,
+    speed: 0.56,
+    density: 8.7,
+    strength: 0.0,
+    scale: 0.1,
+    octaves: 1.0,
+    radialBias: -1.0,
     audioStrength: 1.0,
     smoothing: 0.8,
     sensitivity: 1.0,
@@ -115,52 +115,52 @@ const params = {
     noiseDetail: 3.0,
     evolutionSpeed: 0.2,
     // v2.5 Galaxy Swirl
-    swirlEnabled: false,
-    swirlSpeed: 0.4,
-    twistAmount: 2.0,
-    swirlDetail: 4.0,
-    clusterIntensity: 3.0,
+    swirlEnabled: true,
+    swirlSpeed: 0.48,
+    twistAmount: 1.0,
+    swirlDetail: 7.0,
+    clusterIntensity: 10.0,
     // v2.5 Core HDR
     coreIntensity: 1.5,
     // v2.5 Export Settings
     exportFps: 30,
-    exportFormat: 'mov',
-    exportResolution: '4K', // 4K / 2K / 1080p / 720p / 512
+    exportFormat: 'png_sequence',
+    exportResolution: '2K',
     // v3.0 Shape Morphing
-    morphTarget: 0,
-    morphProgress: 0.0,
+    morphTarget: 2, // Tor
+    morphProgress: 1.0,
     // v3.0 Attractors
-    attractorStrength: 0.0,
-    attractorX: 0.0,
-    attractorY: 0.0,
-    attractorZ: 0.0,
+    attractorStrength: 2.0,
+    attractorX: 1.0,
+    attractorY: 1.0,
+    attractorZ: 2.0,
     // v3.0 Glitch
-    glitchActive: false,
-    glitchIntensity: 0.5,
+    glitchActive: true,
+    glitchIntensity: 2.0,
     // v3.0 Visual DNA
     imageEnabled: false,
     imageMorphFactor: 0.0,
     imageDisplacementFactor: 0.0,
     imageColorMix: 0.0,
     // v3.2 Loop
-    loopActive: false,
-    loopDuration: 10.0,
+    loopActive: true,
+    loopDuration: 3.0,
     // v3.3 Chaos
-    chaosAmplitude: 0.0,
-    chaosSpeed: 0.5,
-    sphereDetail: 100,
-    voidRadius: 0.0,
-    orbitChaos: 0.0,
+    chaosAmplitude: 2.0,
+    chaosSpeed: 5.0,
+    sphereDetail: 50,
+    voidRadius: 2.0,
+    orbitChaos: 5.0,
     viewClear: 0.0,
     // v4.0 Flow Field
     flowEnabled: false,
     flowStrength: 0.5,
-    flowSpeed: 0.3,
-    flowFrequency: 2.0,
-    flowOctaves: 3,
-    flowTurbulence: 0.5,
+    flowSpeed: 0.0,
+    flowFrequency: 3.9,
+    flowOctaves: 4,
+    flowTurbulence: 1.5,
     // v4.1 Sphere Scale
-    sphereScale: 1.0
+    sphereScale: 0.2
 };
 
 // UI: dat.GUI Setup
