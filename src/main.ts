@@ -167,6 +167,53 @@ const params = {
 const gui = new dat.GUI({ autoPlace: false });
 document.getElementById('gui-container')?.appendChild(gui.domElement);
 
+// Default Sphere Params (clean state)
+const defaultSphereParams = {
+    baseColor: '#ffffff',
+    accentColor: '#ffffff',
+    spotScale: 0.0,
+    spotThreshold: 0.0,
+    opacity: 1.0,
+    speed: 0.2,
+    density: 1.0,
+    strength: 0.0,
+    scale: 1.0,
+    octaves: 1.0,
+    radialBias: 0.0,
+    showCore: false,
+    showStrips: false,
+    swirlEnabled: false,
+    glitchActive: false,
+    imageEnabled: false,
+    flowEnabled: false,
+    morphProgress: 0.0,
+    attractorStrength: 0.0,
+    chaosAmplitude: 0.0,
+    voidRadius: 0.0,
+    orbitChaos: 0.0,
+    viewClear: 0.0,
+    sphereScale: 1.0,
+    loopActive: false
+};
+
+// Reset Button
+const resetActions = {
+    resetToDefault: () => {
+        Object.assign(params, defaultSphereParams);
+        sphere.setParams(params);
+        sphere.rebuildGeometry(params.sphereDetail);
+        // Update GUI
+        for (let i in gui.__folders) {
+            for (let j in gui.__folders[i].__controllers) {
+                gui.__folders[i].__controllers[j].updateDisplay();
+            }
+        }
+        statusEl.innerText = 'Сброс до чистой сферы';
+    }
+};
+
+gui.add(resetActions, 'resetToDefault').name('🔄 СБРОС (Чистая сфера)');
+
 // 1. Center Interface (Core) - at top, disabled by default
 const centerFolder = gui.addFolder('▼ 1. Центр');
 centerFolder.add(params, 'sphereDetail', { 'Minimal (25)': 25, 'Low (50)': 50, 'Mid (100)': 100, 'High (150)': 150, 'Extreme (200)': 200, 'Ultra (300)': 300 }).name('Плотность точек').onChange(v => {

@@ -267,13 +267,23 @@ export const vertexShader = `
 
         // v4.0 Flow Field (Curl Noise) - Applied before other modes
         if (uFlowEnabled) {
+            // Calculate time for flow (circular if looping)
+            float flowTime;
+            if (uLoopActive) {
+                float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                float loopRadius = uLoopDuration * uFlowSpeed * 0.5;
+                flowTime = cos(angle) * loopRadius; // Circular motion for seamless loop
+            } else {
+                flowTime = uTime * uFlowSpeed;
+            }
+            
             // Get flow velocity from curl noise
-            vec3 flowPos = pos * uFlowFrequency + vec3(uTime * uFlowSpeed);
+            vec3 flowPos = pos * uFlowFrequency + vec3(flowTime);
             vec3 flowVelocity = curlFBM(flowPos, uFlowOctaves, 1.0);
             
             // Add turbulence layer (higher frequency noise)
             if (uFlowTurbulence > 0.0) {
-                vec3 turbulence = curlNoise(flowPos * 4.0 + vec3(uTime * uFlowSpeed * 2.0));
+                vec3 turbulence = curlNoise(flowPos * 4.0 + vec3(flowTime * 2.0));
                 flowVelocity += turbulence * uFlowTurbulence;
             }
             
