@@ -79,7 +79,9 @@ export class UnitSphere {
                 uFlowSpeed: { value: 0.3 },
                 uFlowFrequency: { value: 2.0 },
                 uFlowOctaves: { value: 3.0 },
-                uFlowTurbulence: { value: 0.5 }
+                uFlowTurbulence: { value: 0.5 },
+                // v4.1 Sphere Scale
+                uSphereScale: { value: 1.0 }
             },
             transparent: true,
             depthTest: false,
@@ -222,6 +224,9 @@ export class UnitSphere {
         if (params.flowFrequency !== undefined) u.uFlowFrequency.value = params.flowFrequency;
         if (params.flowOctaves !== undefined) u.uFlowOctaves.value = params.flowOctaves;
         if (params.flowTurbulence !== undefined) u.uFlowTurbulence.value = params.flowTurbulence;
+
+        // v4.1 Sphere Scale
+        if (params.sphereScale !== undefined) u.uSphereScale.value = params.sphereScale;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;

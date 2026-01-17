@@ -66,6 +66,9 @@ export const vertexShader = `
     uniform float uFlowOctaves;
     uniform float uFlowTurbulence;
 
+    // v4.1 Sphere Scale
+    uniform float uSphereScale;
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -392,6 +395,10 @@ export const vertexShader = `
         }
         
         vec3 finalPosition = pos * expansion + normal * displacement;
+        
+        // v4.1 Sphere Scale - scale particles towards/away from center
+        finalPosition *= uSphereScale;
+        
         vDistToCenter = length(finalPosition);
 
 

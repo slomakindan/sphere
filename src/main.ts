@@ -158,7 +158,9 @@ const params = {
     flowSpeed: 0.3,
     flowFrequency: 2.0,
     flowOctaves: 3,
-    flowTurbulence: 0.5
+    flowTurbulence: 0.5,
+    // v4.1 Sphere Scale
+    sphereScale: 1.0
 };
 
 // UI: dat.GUI Setup
@@ -170,6 +172,7 @@ const centerFolder = gui.addFolder('▼ 1. Центр');
 centerFolder.add(params, 'sphereDetail', { 'Minimal (25)': 25, 'Low (50)': 50, 'Mid (100)': 100, 'High (150)': 150, 'Extreme (200)': 200, 'Ultra (300)': 300 }).name('Плотность точек').onChange(v => {
     sphere.rebuildGeometry(parseInt(v));
 });
+centerFolder.add(params, 'sphereScale', 0.1, 3.0).name('Размер сферы').onChange(v => sphere.setParams({ sphereScale: v }));
 centerFolder.add(params, 'showCore').name('Ядро').onChange(v => sphere.setParams({ showCore: v }));
 centerFolder.add(params, 'coreSize', 0.01, 0.5).name('Размер').onChange(v => sphere.setParams({ coreSize: v }));
 centerFolder.addColor(params, 'coreColor').name('Цвет').onChange(v => sphere.setParams({ coreColor: v }));
