@@ -275,7 +275,7 @@ vortexFolder.add(params, 'vortexTilt', 0.0, 1.57).name('Наклон оси').on
 
 const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
 exportFolder.add(params, 'exportFormat', ['mov', 'webm', 'apng', 'png_sequence']).name('Формат (Codec)').listen();
-exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p', '512', '256']).name('Разрешение');
+exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p', '512', '256', '100']).name('Разрешение');
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
 
@@ -306,6 +306,7 @@ const exportActions = {
             case '720p': size = 720; break;
             case '512': size = 512; break;
             case '256': size = 256; break;
+            case '100': size = 100; break;
         }
 
         // Start FFmpeg or PNG Sequence
@@ -377,9 +378,13 @@ const exportActions = {
             return;
         }
 
-        // Sticker Logic: 256/512px + WebM/APNG = 256KB Limit
-        const isStickerSize = (size === 256 || size === 512);
-        const maxSize = (isStickerSize && (format === 'apng' || format === 'webm')) ? 256 : 0;
+        // Sticker Logic: Size-based limits
+        const isStickerSize = (size === 100 || size === 256 || size === 512);
+        let maxSize = 0;
+        if (isStickerSize && (format === 'apng' || format === 'webm')) {
+            if (size === 100) maxSize = 64;      // 64KB for 100px
+            else maxSize = 256;                   // 256KB for 256/512px
+        }
 
         // Pass audio path (APNG doesn't support audio)
         const audioPath = (format === 'apng') ? null : currentAudioPath;
@@ -695,11 +700,16 @@ renderMotionBtn.addEventListener('click', async () => {
         case '720p': size = 720; break;
         case '512': size = 512; break;
         case '256': size = 256; break;
+        case '100': size = 100; break;
     }
 
-    // Sticker Logic: 256/512px + WebM/APNG = 256KB Limit
-    const isStickerSize = (size === 256 || size === 512);
-    const maxSize = (isStickerSize && (format === 'apng' || format === 'webm')) ? 256 : 0;
+    // Sticker Logic: Size-based limits
+    const isStickerSize = (size === 100 || size === 256 || size === 512);
+    let maxSize = 0;
+    if (isStickerSize && (format === 'apng' || format === 'webm')) {
+        if (size === 100) maxSize = 64;      // 64KB for 100px
+        else maxSize = 256;                   // 256KB for 256/512px
+    }
 
     // APNG doesn't support audio
     const audioPath = (format === 'apng') ? null : currentAudioPath;
