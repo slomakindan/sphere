@@ -115,7 +115,7 @@ const params = {
     // v2.5 Export Settings
     exportFps: 30,
     exportFormat: 'mov',
-    exportQuality: 'Medium', // High / Medium / Low
+    exportResolution: '4K', // 4K / 2K / 1080p / 720p
     // v3.0 Shape Morphing
     morphTarget: 0,
     morphProgress: 0.0,
@@ -168,7 +168,7 @@ chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChang
 
 const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
 exportFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат (Codec)').listen();
-exportFolder.add(params, 'exportQuality', ['High', 'Medium', 'Low']).name('Качество');
+exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p']).name('Разрешение');
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
 
@@ -189,10 +189,19 @@ const exportActions = {
         renderOverlay.style.display = 'flex';
         totalFramesEl.innerText = totalFrames.toString();
 
+        // Resolution Logic
+        let size = 1080;
+        switch (params.exportResolution) {
+            case '4K': size = 4096; break;
+            case '2K': size = 2048; break;
+            case '1080p': size = 1080; break;
+            case '720p': size = 720; break;
+        }
+
         // Start FFmpeg
         const format = params.exportFormat as 'mov' | 'webm';
-        const quality = params.exportQuality;
-        const started = await sceneManager.startProResExport(4096, 4096, fps, format, quality);
+        // We revert back to standard export without quality param
+        const started = await sceneManager.startProResExport(size, size, fps, format);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -227,8 +236,10 @@ const exportActions = {
                 camera: cameraState
             };
 
-            // Render 4K Frame
-            const pixels = await sceneManager.renderMotionFrame(frame, 4096);
+
+
+            // Render Frame at selected Size
+            const pixels = await sceneManager.renderMotionFrame(frame, size);
 
             // Send to FFmpeg
             await sceneManager.sendFrame(pixels);
@@ -479,8 +490,17 @@ renderMotionBtn.addEventListener('click', async () => {
 
     // Start FFmpeg in Electron
     const format = params.exportFormat as 'mov' | 'webm';
-    const quality = params.exportQuality;
-    const started = await sceneManager.startProResExport(4096, 4096, fps, format, quality); // UNIT 4K
+
+    // Resolution Logic
+    let size = 1080;
+    switch (params.exportResolution) {
+        case '4K': size = 4096; break;
+        case '2K': size = 2048; break;
+        case '1080p': size = 1080; break;
+        case '720p': size = 720; break;
+    }
+
+    const started = await sceneManager.startProResExport(size, size, fps, format); // Dynamic Size
     if (!started) {
         renderOverlay.style.display = 'none';
         return;
@@ -493,8 +513,8 @@ renderMotionBtn.addEventListener('click', async () => {
 
         if (!frame) continue;
 
-        // Render 4K Frame
-        const pixels = await sceneManager.renderMotionFrame(frame, 4096);
+        // Render Frame at selected resolution
+        const pixels = await sceneManager.renderMotionFrame(frame, size);
 
         // Send to FFmpeg
         await sceneManager.sendFrame(pixels);
