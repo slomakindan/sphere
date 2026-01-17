@@ -70,7 +70,9 @@ export class UnitSphere {
                 uLoopDuration: { value: 10.0 },
                 // v3.3 Chaos Mode
                 uChaosAmplitude: { value: 0.0 },
-                uChaosSpeed: { value: 1.0 }
+                uChaosSpeed: { value: 1.0 },
+                uCameraPosition: { value: new THREE.Vector3() }, // NEW
+                uViewClear: { value: 0.0 } // NEW
             },
             transparent: true,
             depthTest: false,
@@ -203,7 +205,8 @@ export class UnitSphere {
         if (params.swirlDetail !== undefined) u.uSwirlDetail.value = params.swirlDetail;
         if (params.clusterIntensity !== undefined) u.uClusterIntensity.value = params.clusterIntensity;
         if (params.voidRadius !== undefined) u.uVoidRadius.value = params.voidRadius;
-        if (params.orbitChaos !== undefined) u.uOrbitChaos.value = params.orbitChaos; // NEW
+        if (params.orbitChaos !== undefined) u.uOrbitChaos.value = params.orbitChaos;
+        if (params.viewClear !== undefined) u.uViewClear.value = params.viewClear; // NEW // NEW
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;

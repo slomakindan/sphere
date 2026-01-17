@@ -15,7 +15,9 @@ export const vertexShader = `
     uniform float uSwirlDetail;
     uniform float uClusterIntensity;
     uniform float uVoidRadius;
-    uniform float uOrbitChaos; // NEW: Chaotic 3D rotation // NEW: Black hole radius
+    uniform float uOrbitChaos;
+    uniform vec3 uCameraPosition; // NEW
+    uniform float uViewClear;     // NEW
     
     // v3.0 Shape Morphing
     uniform int uMorphTarget; // 0=sphere, 1=cube, 2=torus
@@ -232,12 +234,39 @@ export const vertexShader = `
             // 3. Black Hole Effect: Spherical Shift (Event Horizon)
             // Instead of clamping (which creating a hard shell), we SHIFT everything outward.
             // This preserves the cloud structure but pushes it away from the singularity.
+            // 3. Black Hole Effect: Spherical Shift (Event Horizon)
             if (uVoidRadius > 0.0) {
                 float r = length(pos);
-                // Shift: r_new = void_radius + r_old
-                // This guarantees MINIMUM radius is void_radius
                 pos = normalize(pos) * (uVoidRadius + r);
             }
+            
+            // 4. View Clearing: Push particles away from camera line of sight
+            if (uViewClear > 0.0) {
+                 vec3 viewDir = normalize(uCameraPosition);
+                 float viewDot = dot(normalize(pos), viewDir);
+                 
+                 // Only affect particles "facing" the camera (viewDot > 0)
+                 // and within a narrow cone (viewDot close to 1.0)
+                 if (viewDot > 0.5) {
+                     // Calculate push factor: stronger when directly in front (viewDot ~ 1.0)
+                     float push = smoothstep(0.5, 1.0, viewDot) * uViewClear;
+                     
+                     // Push radially perpendicular to viewDir
+                     // Or simply away from the view axis.
+                     // Simple trick: Move particle along normal but subtract view component?
+                     // Easier: just push it away from the camera-center axis.
+                     
+                     vec3 axisPoint = viewDir * dot(pos, viewDir);
+                     vec3 toAxis = pos - axisPoint;
+                     float axisDist = length(toAxis);
+                     
+                     // If close to axis, push out
+                     if (axisDist < uViewClear * 2.0) { // Multiplier determines width of tunnel
+                         pos += normalize(toAxis) * (uViewClear * 2.0 - axisDist);
+                     }
+                 }
+            }
+            
             dist = length(pos); // Final distance
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
             vDensity = max(0.0, density) * uClusterIntensity;
