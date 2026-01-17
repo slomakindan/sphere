@@ -40,7 +40,7 @@ function createWindow() {
     }
 
     ipcMain.handle('start-ffmpeg-capture', async (event, options) => {
-        let { width, height, fps, filename, format = 'mov' } = options;
+        let { width, height, fps, filename, format = 'mov', audioPath = null } = options;
 
         // EINVAL Fix: Ensure dimensions are even
         width = Math.floor(width / 2) * 2;
@@ -76,8 +76,23 @@ function createWindow() {
                     `-s ${width}x${height}`,
                     '-pix_fmt rgba',
                     `-r ${fps}`
-                ])
-                .output(filePath);
+                ]);
+
+            // Audio Mixing Logic
+            if (audioPath) {
+                console.log('Attaching audio:', audioPath);
+                command
+                    .input(audioPath)
+                    .outputOptions([
+                        '-map 0:v',      // Map video from pipe
+                        '-map 1:a',      // Map audio from file
+                        '-c:a aac',      // Encode audio to AAC
+                        '-b:a 192k',
+                        '-shortest'      // Finish when shortest stream ends (usually video)
+                    ]);
+            }
+
+            command.output(filePath);
 
             if (format === 'webm') {
                 // WebM (VP9 + Alpha)

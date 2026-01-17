@@ -282,9 +282,11 @@ select {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--glass-border);
   color: var(--text-primary);
-  padding: 14px;
-  border-radius: 10px;
-  margin-bottom: 12px;
+  padding: 7px;
+  /* Reduced from 14px per request */
+  border-radius: 6px;
+  /* Slightly tighter radius */
+  margin-bottom: 10px;
   font-size: 11px;
   outline: none;
 }

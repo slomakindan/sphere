@@ -200,8 +200,8 @@ const exportActions = {
 
         // Start FFmpeg
         const format = params.exportFormat as 'mov' | 'webm';
-        // We revert back to standard export without quality param
-        const started = await sceneManager.startProResExport(size, size, fps, format);
+        // Pass audio path
+        const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -500,7 +500,7 @@ renderMotionBtn.addEventListener('click', async () => {
         case '720p': size = 720; break;
     }
 
-    const started = await sceneManager.startProResExport(size, size, fps, format); // Dynamic Size
+    const started = await sceneManager.startProResExport(size, size, fps, format, currentAudioPath); // Dynamic Size + Audio
     if (!started) {
         renderOverlay.style.display = 'none';
         return;
@@ -554,11 +554,17 @@ stopRenderBtn.addEventListener('click', () => {
     statusEl.innerText = 'Остановка...';
 });
 
+// Audio Logic
+let currentAudioPath: string | null = null;
+
 // Controls & Audio
 loadAudioBtn.addEventListener('click', () => audioInput.click());
 audioInput.addEventListener('change', async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (file) {
+        // Capture path for export (Electron specific)
+        currentAudioPath = (file as any).path || null;
+
         statusEl.innerText = 'Scanning frequency...';
         const name = await audioController.loadFile(file);
         statusEl.innerText = `Track: ${name}`;
