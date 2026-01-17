@@ -205,10 +205,16 @@ export const vertexShader = `
         if (uSwirlEnabled) {
             float dist = length(pos);
             
-            // Black Hole Effect: Push particles outward
+            // Black Hole Effect: Cylindrical expansion (Donut shape)
             if (uVoidRadius > 0.0) {
-               pos += normalize(pos) * uVoidRadius;
-               dist = length(pos); // Update distance
+               float r = length(pos.xz);
+               if (r > 0.001) {
+                   pos.xz = (pos.xz / r) * (r + uVoidRadius);
+               }
+               // Optional: Flatten slightly as holes form to look more like a galaxy disk
+               pos.y *= mix(1.0, 0.5, clamp(uVoidRadius * 0.5, 0.0, 1.0));
+               
+               dist = length(pos); // Update distance for swirl
             }
 
             float angle = uTime * uSwirlSpeed + dist * uTwistAmount;
