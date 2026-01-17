@@ -240,34 +240,24 @@ export const vertexShader = `
                 pos = normalize(pos) * (uVoidRadius + r);
             }
             
-            // 4. View Clearing: Push particles away from camera line of sight
-            if (uViewClear > 0.0) {
-                 vec3 viewDir = normalize(uCameraPosition);
-                 float viewDot = dot(normalize(pos), viewDir);
-                 
-                 // Only affect particles "facing" the camera (viewDot > 0)
-                 // and within a narrow cone (viewDot close to 1.0)
-                 if (viewDot > 0.5) {
-                     // Calculate push factor: stronger when directly in front (viewDot ~ 1.0)
-                     float push = smoothstep(0.5, 1.0, viewDot) * uViewClear;
-                     
-                     // Push radially perpendicular to viewDir
-                     // Or simply away from the view axis.
-                     // Simple trick: Move particle along normal but subtract view component?
-                     // Easier: just push it away from the camera-center axis.
-                     
-                     vec3 axisPoint = viewDir * dot(pos, viewDir);
-                     vec3 toAxis = pos - axisPoint;
-                     float axisDist = length(toAxis);
-                     
-                     // If close to axis, push out
-                     if (axisDist < uViewClear * 2.0) { // Multiplier determines width of tunnel
-                         pos += normalize(toAxis) * (uViewClear * 2.0 - axisDist);
-                     }
-                 }
-            }
+
             
-            dist = length(pos); // Final distance
+            // Calculate final gl_Position using our (possibly modified) View Position
+            gl_Position = projectionMatrix * mvPos;
+            
+            // NOTE: We skip the standard 'gl_Position = ...' below because we did it here.
+            // We need to return or restructure the main function to avoid double assignment?
+            // No, we can just assign the result to 'pos' by inverse matrix? Expensive.
+            // Easier: Just set a flag or use a specific variable.
+            
+            // Let's rewrite the end of main() to use mvPos.
+            // But wait, the standard code uses 'finalPosition' for noise displacement later?
+            // Lines 287-299 apply expansion and displacement.
+            // We should apply View Clear AFTER all other displacements.
+            
+            // Let's apply displacement first, THEN View Clear.
+            // Move this logic to the very end of main()
+
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
             vDensity = max(0.0, density) * uClusterIntensity;
             noise = fbm(pos * uNoiseDensity + vec3(uTime * uSpeed), uOctaves, uNoiseScale);
@@ -351,6 +341,22 @@ export const vertexShader = `
 
         vec4 modelPosition = modelMatrix * vec4(finalPosition, 1.0);
         vec4 viewPosition = viewMatrix * modelPosition;
+
+        // v3.5 View Clearing (Applies to all modes)
+        if (uViewClear > 0.0) {
+             vec4 centerViewPos = viewMatrix * modelMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+             float viewDist = length(viewPosition.xy - centerViewPos.xy);
+             
+             // Check if inside clear zone AND in front of the sphere center
+             if (viewDist < uViewClear && viewPosition.z > centerViewPos.z) {
+                 vec2 pushDir = normalize(viewPosition.xy - centerViewPos.xy);
+                 if (length(viewPosition.xy - centerViewPos.xy) < 0.001) pushDir = vec2(1.0, 0.0);
+                 
+                 // Push to edge
+                 viewPosition.xy = centerViewPos.xy + pushDir * uViewClear;
+             }
+        }
+
         vec4 projectionPosition = projectionMatrix * viewPosition;
 
         gl_Position = projectionPosition;
