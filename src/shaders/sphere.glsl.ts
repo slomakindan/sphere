@@ -241,23 +241,6 @@ export const vertexShader = `
             }
             
 
-            
-            // Calculate final gl_Position using our (possibly modified) View Position
-            gl_Position = projectionMatrix * mvPos;
-            
-            // NOTE: We skip the standard 'gl_Position = ...' below because we did it here.
-            // We need to return or restructure the main function to avoid double assignment?
-            // No, we can just assign the result to 'pos' by inverse matrix? Expensive.
-            // Easier: Just set a flag or use a specific variable.
-            
-            // Let's rewrite the end of main() to use mvPos.
-            // But wait, the standard code uses 'finalPosition' for noise displacement later?
-            // Lines 287-299 apply expansion and displacement.
-            // We should apply View Clear AFTER all other displacements.
-            
-            // Let's apply displacement first, THEN View Clear.
-            // Move this logic to the very end of main()
-
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
             vDensity = max(0.0, density) * uClusterIntensity;
             noise = fbm(pos * uNoiseDensity + vec3(uTime * uSpeed), uOctaves, uNoiseScale);
