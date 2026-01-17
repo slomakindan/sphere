@@ -42,6 +42,17 @@ function createWindow() {
     ipcMain.handle('start-ffmpeg-capture', async (event, options) => {
         let { width, height, fps, filename, format = 'mov', audioPath = null } = options;
 
+        // DEBUG: Log all incoming parameters
+        console.log('═══════════════════════════════════════════════');
+        console.log('FFmpeg Capture Started');
+        console.log('Format:', format);
+        console.log('Resolution:', `${width}x${height}`);
+        console.log('FPS:', fps);
+        console.log('Audio Path:', audioPath);
+        console.log('Max Size:', options.maxSize);
+        console.log('Duration:', options.duration);
+        console.log('═══════════════════════════════════════════════');
+
         // EINVAL Fix: Ensure dimensions are even
         width = Math.floor(width / 2) * 2;
         height = Math.floor(height / 2) * 2;
@@ -109,40 +120,39 @@ function createWindow() {
                 ];
 
                 if (options.maxSize) {
-                    // ULTRA-AGGRESSIVE MODE: Force 250KB or less
+                    // NUCLEAR OPTION: Force under 250KB no matter what
                     const safeDuration = options.duration || 10.0;
 
-                    // Target: 240KB to leave room for container overhead
-                    const targetBytes = 240 * 1024;
+                    // Target 220KB to have safety margin
+                    const targetBytes = 220 * 1024;
                     const totalBits = targetBytes * 8;
 
-                    // Use only 65% of theoretical bitrate to account for:
-                    // - VP9 VBR spikes
-                    // - Container overhead
-                    // - Keyframe size spikes
-                    const conservativeBitrate = Math.floor((totalBits / safeDuration) * 0.65);
-                    const safeBitrate = Math.max(conservativeBitrate, 8000); // absolute floor
+                    // Use only 50% of theoretical bitrate - extremely conservative
+                    const ultraConservativeBitrate = Math.floor((totalBits / safeDuration) * 0.50);
+                    const safeBitrate = Math.max(ultraConservativeBitrate, 5000);
 
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                    console.log(`[STICKER MODE ACTIVE]`);
-                    console.log(`Target: 240KB | Duration: ${safeDuration}s`);
+                    console.log(`[STICKER MODE - NUCLEAR]`);
+                    console.log(`Target: 220KB | Duration: ${safeDuration}s`);
                     console.log(`Video Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
+                    console.log(`Theoretical max: ${Math.floor((targetBytes / safeDuration) / 1024)}KB/s`);
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-                    // STRICT constraints
-                    opts.push('-quality good'); // Better compression than realtime
-                    opts.push('-cpu-used 5'); // Fast but allows decent compression
+                    // NUCLEAR settings
+                    opts.push('-quality best'); // Best compression (slowest)
+                    opts.push('-cpu-used 0'); // Maximum compression
                     opts.push(`-b:v ${safeBitrate}`);
-                    opts.push(`-maxrate ${safeBitrate}`); // HARD ceiling
-                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.3)}`); // Allow lower for simple frames
-                    opts.push(`-bufsize ${Math.floor(safeBitrate * 1.5)}`); // Tight buffer
-                    opts.push('-g 120'); // Keyframe every 4s @ 30fps
+                    opts.push(`-maxrate ${safeBitrate}`); // Absolute ceiling
+                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.2)}`);
+                    opts.push(`-bufsize ${safeBitrate}`); // Very tight buffer
+                    opts.push('-crf 40'); // Low quality CRF as backup constraint
+                    opts.push('-g 240'); // Keyframe every 8s to save space
+                    opts.push('-speed 0'); // Slowest, best compression
                 } else {
                     // High Quality / Default
                     opts.push('-deadline realtime');
                     opts.push('-cpu-used 4');
                     opts.push('-crf 20');
-                    opts.push('-b:v 0');
                 }
 
                 command.outputOptions(opts);
