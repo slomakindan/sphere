@@ -11,6 +11,8 @@ declare const electronAPI: {
     sendFrame: (data: Uint8Array) => Promise<void>;
     stopFfmpegCapture: () => void;
     saveAudioBlob: (buffer: ArrayBuffer) => Promise<string | null>;
+    selectFolder: () => Promise<string | null>;
+    savePNGFrame: (data: { folderPath: string; filename: string; pixels: Uint8Array; width: number; height: number }) => Promise<{ success: boolean }>;
 };
 
 const appContainer = document.getElementById('app') as HTMLElement;
@@ -145,7 +147,8 @@ const params = {
     loopDuration: 10.0,
     // v3.3 Chaos
     chaosAmplitude: 0.0,
-    chaosSpeed: 0.5
+    chaosSpeed: 0.5,
+    sphereDetail: 100
 };
 
 // UI: dat.GUI Setup
@@ -154,6 +157,9 @@ document.getElementById('gui-container')?.appendChild(gui.domElement);
 
 // 1. Center Interface (Core) - at top, disabled by default
 const centerFolder = gui.addFolder('▼ 1. Центр');
+centerFolder.add(params, 'sphereDetail', { 'Low (50)': 50, 'Mid (100)': 100, 'High (150)': 150, 'Extreme (200)': 200, 'Ultra (300)': 300 }).name('Плотность точек').onChange(v => {
+    sphere.rebuildGeometry(parseInt(v));
+});
 centerFolder.add(params, 'showCore').name('Ядро').onChange(v => sphere.setParams({ showCore: v }));
 centerFolder.add(params, 'coreSize', 0.01, 0.5).name('Размер').onChange(v => sphere.setParams({ coreSize: v }));
 centerFolder.addColor(params, 'coreColor').name('Цвет').onChange(v => sphere.setParams({ coreColor: v }));

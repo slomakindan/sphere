@@ -7,12 +7,14 @@ export class UnitSphere {
     stripsGroup: THREE.Group;
     material: THREE.ShaderMaterial;
     group: THREE.Group;
+    private detail: number = 100;
 
-    constructor() {
+    constructor(detail: number = 100) {
+        this.detail = detail;
         this.group = new THREE.Group();
 
-        // High density geometry for v2.3
-        const geometry = new THREE.IcosahedronGeometry(1.5, 160);
+        // Initial geometry
+        const geometry = new THREE.IcosahedronGeometry(1.5, this.detail);
 
         this.material = new THREE.ShaderMaterial({
             vertexShader,
@@ -250,5 +252,21 @@ export class UnitSphere {
 
     public setResolution(width: number, height: number) {
         this.material.uniforms.uResolution.value.set(width, height);
+    }
+
+    public rebuildGeometry(detail: number) {
+        this.detail = detail;
+
+        // Dispose old geometry
+        const oldGeometry = this.mesh.geometry;
+        oldGeometry.dispose();
+
+        // Create new geometry
+        const newGeometry = new THREE.IcosahedronGeometry(1.5, this.detail);
+
+        // Update mesh
+        this.mesh.geometry = newGeometry;
+
+        console.log(`[SPHERE] Rebuilt with ${newGeometry.getAttribute('position').count} particles (detail: ${this.detail})`);
     }
 }
