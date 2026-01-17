@@ -214,7 +214,7 @@ flowFolder.add(params, 'flowTurbulence', 0.0, 1.5).name('Турбулентно�
 
 const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
 exportFolder.add(params, 'exportFormat', ['mov', 'webm', 'apng', 'png_sequence']).name('Формат (Codec)').listen();
-exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p', '512']).name('Разрешение');
+exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p', '512', '256']).name('Разрешение');
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
 
@@ -244,6 +244,7 @@ const exportActions = {
             case '1080p': size = 1080; break;
             case '720p': size = 720; break;
             case '512': size = 512; break;
+            case '256': size = 256; break;
         }
 
         // Start FFmpeg or PNG Sequence
@@ -315,8 +316,9 @@ const exportActions = {
             return;
         }
 
-        // Sticker Logic: 512px + APNG = 250KB Limit
-        const maxSize = (size === 512 && format === 'apng') ? 250 : 0;
+        // Sticker Logic: 256/512px + WebM/APNG = 256KB Limit
+        const isStickerSize = (size === 256 || size === 512);
+        const maxSize = (isStickerSize && (format === 'apng' || format === 'webm')) ? 256 : 0;
 
         // Pass audio path (APNG doesn't support audio)
         const audioPath = (format === 'apng') ? null : currentAudioPath;
@@ -631,10 +633,12 @@ renderMotionBtn.addEventListener('click', async () => {
         case '1080p': size = 1080; break;
         case '720p': size = 720; break;
         case '512': size = 512; break;
+        case '256': size = 256; break;
     }
 
-    // Sticker Logic: 512px + APNG = 250KB Limit
-    const maxSize = (size === 512 && format === 'apng') ? 250 : 0;
+    // Sticker Logic: 256/512px + WebM/APNG = 256KB Limit
+    const isStickerSize = (size === 256 || size === 512);
+    const maxSize = (isStickerSize && (format === 'apng' || format === 'webm')) ? 256 : 0;
 
     // APNG doesn't support audio
     const audioPath = (format === 'apng') ? null : currentAudioPath;
