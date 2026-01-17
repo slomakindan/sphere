@@ -229,15 +229,14 @@ export const vertexShader = `
                  pos = rotateY(pos, angle);
             }
 
-            // 3. Black Hole Effect: Hard Event Horizon
-            // Ensure NO particle is closer than uVoidRadius
+            // 3. Black Hole Effect: Spherical Shift (Event Horizon)
+            // Instead of clamping (which creating a hard shell), we SHIFT everything outward.
+            // This preserves the cloud structure but pushes it away from the singularity.
             if (uVoidRadius > 0.0) {
-                float currentR = length(pos);
-                if (currentR < uVoidRadius) {
-                    // Push particles out to the edge of the void
-                    // Add some noise so they don't all stick to the exact surface
-                    pos = normalize(pos) * (uVoidRadius + abs(staticNoise) * 0.5); 
-                }
+                float r = length(pos);
+                // Shift: r_new = void_radius + r_old
+                // This guarantees MINIMUM radius is void_radius
+                pos = normalize(pos) * (uVoidRadius + r);
             }
             dist = length(pos); // Final distance
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
