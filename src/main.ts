@@ -169,7 +169,7 @@ logicFolder.add({
         totalFramesEl.innerText = totalFrames.toString();
 
         // Start FFmpeg
-        const started = await sceneManager.startProResExport(4096, 4096);
+        const started = await sceneManager.startProResExport(4096, 4096, fps);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -445,7 +445,7 @@ renderMotionBtn.addEventListener('click', async () => {
 
 
     // Start FFmpeg in Electron
-    const started = await sceneManager.startProResExport(4096, 4096); // UNIT 4K
+    const started = await sceneManager.startProResExport(4096, 4096, fps); // UNIT 4K
     if (!started) {
         renderOverlay.style.display = 'none';
         return;
