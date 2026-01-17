@@ -13,7 +13,9 @@ export const vertexShader = `
     uniform float uSwirlSpeed;
     uniform float uTwistAmount;
     uniform float uSwirlDetail;
+    uniform float uSwirlDetail;
     uniform float uClusterIntensity;
+    uniform float uVoidRadius; // NEW: Black hole radius
     
     // v3.0 Shape Morphing
     uniform int uMorphTarget; // 0=sphere, 1=cube, 2=torus
@@ -203,6 +205,13 @@ export const vertexShader = `
 
         if (uSwirlEnabled) {
             float dist = length(pos);
+            
+            // Black Hole Effect: Push particles outward
+            if (uVoidRadius > 0.0) {
+               pos += normalize(pos) * uVoidRadius;
+               dist = length(pos); // Update distance
+            }
+
             float angle = uTime * uSwirlSpeed + dist * uTwistAmount;
             pos = rotateY(pos, angle);
             density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);

@@ -47,6 +47,7 @@ export class UnitSphere {
                 uTwistAmount: { value: 2.0 },
                 uSwirlDetail: { value: 4.0 },
                 uClusterIntensity: { value: 3.0 },
+                uVoidRadius: { value: 0.0 }, // NEW
                 // v3.0 Shape Morphing
                 uMorphTarget: { value: 0 },
                 uMorphProgress: { value: 0.0 },

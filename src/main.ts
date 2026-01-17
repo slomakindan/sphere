@@ -148,7 +148,8 @@ const params = {
     // v3.3 Chaos
     chaosAmplitude: 0.0,
     chaosSpeed: 0.5,
-    sphereDetail: 100
+    sphereDetail: 100,
+    voidRadius: 0.0 // NEW
 };
 
 // UI: dat.GUI Setup
@@ -172,8 +173,10 @@ centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChang
 centerFolder.add(params, 'swirlEnabled').name('Галактика (Swirl)').onChange(v => sphere.setParams({ swirlEnabled: v }));
 centerFolder.add(params, 'swirlSpeed', 0, 2.0).name('Скорость вращ.').onChange(v => sphere.setParams({ swirlSpeed: v }));
 centerFolder.add(params, 'twistAmount', -5.0, 5.0).name('Закручивание').onChange(v => sphere.setParams({ twistAmount: v }));
+centerFolder.add(params, 'twistAmount', -5.0, 5.0).name('Закручивание').onChange(v => sphere.setParams({ twistAmount: v }));
 centerFolder.add(params, 'swirlDetail', 1, 8).step(1).name('Детализация вихря').onChange(v => sphere.setParams({ swirlDetail: v }));
 centerFolder.add(params, 'clusterIntensity', 1.0, 10.0).name('Свечение вихря').onChange(v => sphere.setParams({ clusterIntensity: v }));
+centerFolder.add(params, 'voidRadius', 0.0, 2.0).name('Радиус дыры').onChange(v => sphere.setParams({ voidRadius: v }));
 
 
 
