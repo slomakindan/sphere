@@ -323,14 +323,37 @@ export const fragmentShader = `
     uniform float uChaosAmplitude;
     uniform float uChaosSpeed;
 
+    // Audio Reactivity
+    uniform float uBass;
+    uniform float uMid;
+    uniform float uTreble;
+
+    // Hue Shift Helper
+    vec3 shiftHue(vec3 color, float shift) {
+        vec3 k = vec3(0.57735, 0.57735, 0.57735);
+        float cosAngle = cos(shift);
+        return vec3(color * cosAngle + cross(k, color) * sin(shift) + k * dot(k, color) * (1.0 - cosAngle));
+    }
+
     void main() {
         float dist = length(gl_PointCoord - vec2(0.5));
         if (dist > 0.5) discard;
 
         float particleFade = smoothstep(0.5, 0.1, dist) * 0.6;
         
+        // Audio Reactive Accent
+        vec3 activeAccent = uAccentColor;
+        
+        // 1. Bass boosts intensity
+        activeAccent += uBass * 0.5;
+        
+        // 2. Treble shifts hue (Shimmer)
+        if (uTreble > 0.01) {
+            activeAccent = shiftHue(activeAccent, uTreble * 1.5);
+        }
+
         // Color Spot Engine Mixing
-        vec3 color = mix(uBaseColor, uAccentColor, vColorMask);
+        vec3 color = mix(uBaseColor, activeAccent, vColorMask);
         
         // v3.0 Visual DNA Color Mapping
         if (uImageEnabled && uImageColorMix > 0.0) {
