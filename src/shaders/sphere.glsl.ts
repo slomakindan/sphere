@@ -350,9 +350,13 @@ export const vertexShader = `
              
              // Check if inside clear zone AND in front of the sphere center
              if (viewDist < uViewClear && viewPosition.z > centerViewPos.z) {
-                 vec2 pushDir = normalize(viewPosition.xy - centerViewPos.xy);
-                 // Safety for exact center
-                 if (length(viewPosition.xy - centerViewPos.xy) < 0.001) pushDir = vec2(1.0, 0.0);
+                 vec2 diff = viewPosition.xy - centerViewPos.xy;
+                 float diffLen = length(diff);
+                 
+                 vec2 pushDir = vec2(1.0, 0.0); // Default safe dir
+                 if (diffLen > 0.0001) {
+                     pushDir = diff / diffLen;
+                 }
                  
                  // Push to edge
                  viewPosition.xy = centerViewPos.xy + pushDir * uViewClear;
