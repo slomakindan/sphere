@@ -120,34 +120,32 @@ function createWindow() {
                 ];
 
                 if (options.maxSize) {
-                    // NUCLEAR OPTION: Force under 250KB no matter what
+                    // CBR MODE: Constant bitrate for predictable file size
                     const safeDuration = options.duration || 10.0;
 
-                    // Target 220KB to have safety margin
-                    const targetBytes = 220 * 1024;
+                    // Target 200KB to account for WebM overhead
+                    const targetBytes = 200 * 1024;
                     const totalBits = targetBytes * 8;
 
-                    // Use only 50% of theoretical bitrate - extremely conservative
-                    const ultraConservativeBitrate = Math.floor((totalBits / safeDuration) * 0.50);
-                    const safeBitrate = Math.max(ultraConservativeBitrate, 5000);
+                    // Use 45% of theoretical bitrate (WebM has high overhead)
+                    const targetBitrate = Math.floor((totalBits / safeDuration) * 0.45);
+                    const safeBitrate = Math.max(targetBitrate, 5000);
 
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                    console.log(`[STICKER MODE - NUCLEAR]`);
-                    console.log(`Target: 220KB | Duration: ${safeDuration}s`);
-                    console.log(`Video Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
-                    console.log(`Theoretical max: ${Math.floor((targetBytes / safeDuration) / 1024)}KB/s`);
+                    console.log(`[STICKER MODE - CBR]`);
+                    console.log(`Target: 200KB | Duration: ${safeDuration}s`);
+                    console.log(`CBR Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-                    // NUCLEAR settings
-                    opts.push('-quality best'); // Best compression (slowest)
-                    opts.push('-cpu-used 0'); // Maximum compression
+                    // CBR settings with compatible options
+                    opts.push('-deadline good'); // Compatible with cpu-used 1-5
+                    opts.push('-cpu-used 4'); // Fast enough, good compression
                     opts.push(`-b:v ${safeBitrate}`);
-                    opts.push(`-maxrate ${safeBitrate}`); // Absolute ceiling
-                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.2)}`);
-                    opts.push(`-bufsize ${safeBitrate}`); // Very tight buffer
-                    opts.push('-crf 40'); // Low quality CRF as backup constraint
-                    opts.push('-g 240'); // Keyframe every 8s to save space
-                    opts.push('-speed 0'); // Slowest, best compression
+                    opts.push(`-minrate ${safeBitrate}`); // CBR: min = max = target
+                    opts.push(`-maxrate ${safeBitrate}`); // CBR: min = max = target
+                    opts.push(`-bufsize ${Math.floor(safeBitrate * 2)}`);
+                    opts.push('-g 120'); // Keyframe every 4s
+                    // NO CRF - conflicts with bitrate mode
                 } else {
                     // High Quality / Default
                     opts.push('-deadline realtime');
