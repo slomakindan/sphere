@@ -251,6 +251,29 @@ function createWindow() {
         return false;
     });
 
+    // Alias for 'send-frame' (used by SceneManager.sendFrame)
+    ipcMain.handle('send-frame', async (event, buffer: Uint8Array) => {
+        if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed && ffmpegProcess.stdin.writable) {
+            try {
+                const ok = ffmpegProcess.stdin.write(Buffer.from(buffer));
+                if (!ok) {
+                    await new Promise<void>((resolve) => {
+                        if (ffmpegProcess && ffmpegProcess.stdin) {
+                            ffmpegProcess.stdin.once('drain', resolve);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }
+                return true;
+            } catch (e) {
+                console.error('Error writing to ffmpeg stdin:', e);
+                return false;
+            }
+        }
+        return false;
+    });
+
     ipcMain.on('stop-ffmpeg-capture', () => {
         if (ffmpegProcess && ffmpegProcess.stdin && !ffmpegProcess.killed) {
             ffmpegProcess.stdin.end();

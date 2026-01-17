@@ -221,6 +221,7 @@ exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длител
 
 const exportActions = {
     exportLoop: async () => {
+        console.log('[EXPORT] exportLoop called, format:', params.exportFormat);
         // Export Loop Logic
         const fps = parseInt(params.exportFps.toString());
         const duration = params.loopDuration;
@@ -250,9 +251,12 @@ const exportActions = {
 
         // PNG Sequence: Direct file save
         if (format === 'png_sequence') {
+            console.log('[EXPORT] PNG Sequence mode, requesting folder...');
             // Ask for folder
             const folderPath = await electronAPI.selectFolder();
+            console.log('[EXPORT] Folder selected:', folderPath);
             if (!folderPath) {
+                console.log('[EXPORT] No folder selected, aborting');
                 renderOverlay.style.display = 'none';
                 setAppState('IDLE');
                 return;
