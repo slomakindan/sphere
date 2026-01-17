@@ -132,7 +132,10 @@ const params = {
     imageColorMix: 0.0,
     // v3.2 Loop
     loopActive: false,
-    loopDuration: 10.0
+    loopDuration: 10.0,
+    // v3.3 Chaos
+    chaosAmplitude: 0.0,
+    chaosSpeed: 0.5
 };
 
 // UI: dat.GUI Setup
@@ -152,6 +155,11 @@ centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChang
 const logicFolder = gui.addFolder('▼ 1.1 Логика (Loop)');
 logicFolder.add(params, 'loopActive').name('Зациклить').onChange(v => sphere.setParams({ loopActive: v }));
 logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность (сек)').onChange(v => sphere.setParams({ loopDuration: v }));
+
+const chaosFolder = gui.addFolder('▼ 1.2 Хаос (Life)');
+chaosFolder.add(params, 'chaosAmplitude', 0.0, 2.0).name('Амплитуда').onChange(v => sphere.setParams({ chaosAmplitude: v }));
+chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChange(v => sphere.setParams({ chaosSpeed: v }));
+
 logicFolder.add({
     exportLoop: async () => {
         // Export Loop Logic

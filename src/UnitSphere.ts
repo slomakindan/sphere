@@ -63,7 +63,10 @@ export class UnitSphere {
                 uImageEnabled: { value: false },
                 // v3.2 Loop Mode
                 uLoopActive: { value: false },
-                uLoopDuration: { value: 10.0 }
+                uLoopDuration: { value: 10.0 },
+                // v3.3 Chaos Mode
+                uChaosAmplitude: { value: 0.0 },
+                uChaosSpeed: { value: 1.0 }
             },
             transparent: true,
             depthTest: false,
@@ -136,23 +139,53 @@ export class UnitSphere {
             const duration = this.material.uniforms.uLoopDuration.value;
             const progress = (time % duration) / duration;
 
-            // Loop Mode: Force perfect cycles
-            // Rotation: 1 full turn per loop duration
+            // Loop Mode
             this.group.rotation.y = progress * Math.PI * 2.0;
             this.stripsGroup.rotation.z = progress * Math.PI * 2.0;
-
-            // Position: 1 full sine wave
             this.group.position.y = Math.sin(progress * Math.PI * 2.0) * 0.05;
         } else {
-            // Standard Mode
-            this.group.rotation.y = time * 0.12;
-            this.stripsGroup.rotation.z = time * 0.25;
-            this.group.position.y = Math.sin(time * 0.4) * 0.05;
+            // Chaos/Organic Mode (v3.3)
+            const chaosAmp = this.material.uniforms.uChaosAmplitude?.value || 0;
+            const chaosSpeed = this.material.uniforms.uChaosSpeed?.value || 1.0;
+
+            if (chaosAmp > 0) {
+                // Organic Wandering (Sum of Sines)
+                const t = time * chaosSpeed;
+
+                // Rotation Wandering
+                this.group.rotation.x = (Math.sin(t * 0.5) + Math.cos(t * 1.3)) * chaosAmp * 0.2;
+                this.group.rotation.y = (time * 0.12) + (Math.sin(t * 0.8) + Math.cos(t * 2.1)) * chaosAmp * 0.3;
+                this.group.rotation.z = (Math.sin(t * 0.3) + Math.cos(t * 1.7)) * chaosAmp * 0.1;
+
+                // Position Jitter
+                this.group.position.x = (Math.sin(t * 1.1) + Math.cos(t * 2.3)) * chaosAmp * 0.5;
+                this.group.position.y = (Math.sin(time * 0.4) * 0.05) + (Math.sin(t * 1.4) + Math.cos(t * 2.7)) * chaosAmp * 0.5;
+                this.group.position.z = (Math.sin(t * 1.7) + Math.cos(t * 2.9)) * chaosAmp * 0.5;
+
+                this.stripsGroup.rotation.z = (time * 0.25) + (Math.sin(t * 0.6) * chaosAmp);
+            } else {
+                // Standard Mode
+                this.group.rotation.x = 0;
+                this.group.rotation.y = time * 0.12;
+                this.group.rotation.z = 0;
+                this.stripsGroup.rotation.z = time * 0.25;
+                this.group.position.set(0, Math.sin(time * 0.4) * 0.05, 0);
+            }
         }
     }
 
     setParams(params: any) {
         const u = this.material.uniforms;
+
+        // v3.3 Chaos Mode
+        if (params.chaosAmplitude !== undefined) {
+            if (!u.uChaosAmplitude) u.uChaosAmplitude = { value: 0 };
+            u.uChaosAmplitude.value = params.chaosAmplitude;
+        }
+        if (params.chaosSpeed !== undefined) {
+            if (!u.uChaosSpeed) u.uChaosSpeed = { value: 1.0 };
+            u.uChaosSpeed.value = params.chaosSpeed;
+        }
 
         // Material & Noise
         if (params.baseColor !== undefined) u.uBaseColor.value.set(params.baseColor);
