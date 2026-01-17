@@ -40,7 +40,7 @@ function createWindow() {
     }
 
     ipcMain.handle('start-ffmpeg-capture', async (event, options) => {
-        let { width, height, fps, filename } = options;
+        let { width, height, fps, filename, format = 'mov' } = options;
 
         // EINVAL Fix: Ensure dimensions are even
         width = Math.floor(width / 2) * 2;
@@ -48,9 +48,13 @@ function createWindow() {
 
 
         const { filePath } = await dialog.showSaveDialog({
-            title: 'Save ProRes Video',
-            defaultPath: filename || `UNIT-Capture-${Date.now()}.mov`,
-            filters: [{ name: 'Movies', extensions: ['mov'] }]
+            title: format === 'webm' ? 'Save WebM Video' : 'Save ProRes Video',
+            defaultPath: filename || (format === 'webm' ? `UNIT-Capture-${Date.now()}.webm` : `UNIT-Capture-${Date.now()}.mov`),
+            filters: [
+                format === 'webm'
+                    ? { name: 'WebM Video', extensions: ['webm'] }
+                    : { name: 'Movies', extensions: ['mov'] }
+            ]
         });
 
         if (!filePath) return null;
@@ -73,12 +77,28 @@ function createWindow() {
                     '-pix_fmt rgba',
                     `-r ${fps}`
                 ])
-                .output(filePath)
-                .outputOptions([
+                .output(filePath);
+
+            if (format === 'webm') {
+                // WebM (VP9 + Alpha)
+                command.outputOptions([
+                    '-c:v libvpx-vp9',
+                    '-pix_fmt yuva420p',
+                    '-crf 20',      // Quality (15-25)
+                    '-b:v 0',       // Ensure CRF usage
+                    '-auto-alt-ref 0', // Alpha transparency support
+                    '-threads 4'    // Speed up VP9
+                ]);
+            } else {
+                // Default: ProRes 4444
+                command.outputOptions([
                     '-c:v prores_ks',
                     '-profile:v 4',
                     '-pix_fmt yuva444p10le'
-                ])
+                ]);
+            }
+
+            command
                 .on('start', (cmdLine: string) => {
                     console.log('FFmpeg started:', cmdLine);
                     ffmpegProcess = command.ffmpegProc; // Get the underlying process

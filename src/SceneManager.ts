@@ -381,7 +381,7 @@ export class SceneManager {
     }
 
     // Pro Export Logic
-    public async startProResExport(width: number = 2048, height: number = 2048, fps: number = 60) {
+    public async startProResExport(width: number = 2048, height: number = 2048, fps: number = 60, format: 'mov' | 'webm' = 'mov') {
         if (typeof electronAPI === 'undefined') {
             alert('Desktop API not found. Are you running in Electron?');
             return false;
@@ -391,7 +391,8 @@ export class SceneManager {
             width,
             height,
             fps,
-            filename: `UNIT-ProRes-${Date.now()}.mov`
+            format,
+            filename: format === 'webm' ? `UNIT-WebM-${Date.now()}.webm` : `UNIT-ProRes-${Date.now()}.mov`
         };
 
         const result = await electronAPI.startFFmpegCapture(options);

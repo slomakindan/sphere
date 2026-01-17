@@ -114,6 +114,7 @@ const params = {
     coreIntensity: 1.5,
     // v2.5 Export Settings
     exportFps: 30,
+    exportFormat: 'mov',
     // v3.0 Shape Morphing
     morphTarget: 0,
     morphProgress: 0.0,
@@ -152,7 +153,9 @@ centerFolder.add(params, 'showStrips').name('Полосы').onChange(v => sphere
 centerFolder.add(params, 'stripsOpacity', 0, 1.0).name('Непрозрачность').onChange(v => sphere.setParams({ stripsOpacity: v }));
 centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChange(v => sphere.setParams({ stripsColor: v }));
 
+
 const logicFolder = gui.addFolder('▼ 1.1 Логика (Loop)');
+logicFolder.add(params, 'exportFormat', ['mov', 'webm']).name('Формат').listen();
 logicFolder.add(params, 'loopActive').name('Зациклить').onChange(v => sphere.setParams({ loopActive: v }));
 logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность (сек)').onChange(v => sphere.setParams({ loopDuration: v }));
 
@@ -177,7 +180,8 @@ logicFolder.add({
         totalFramesEl.innerText = totalFrames.toString();
 
         // Start FFmpeg
-        const started = await sceneManager.startProResExport(4096, 4096, fps);
+        const format = params.exportFormat as 'mov' | 'webm';
+        const started = await sceneManager.startProResExport(4096, 4096, fps, format);
         if (!started) {
             renderOverlay.style.display = 'none';
             setAppState('IDLE');
@@ -453,7 +457,8 @@ renderMotionBtn.addEventListener('click', async () => {
 
 
     // Start FFmpeg in Electron
-    const started = await sceneManager.startProResExport(4096, 4096, fps); // UNIT 4K
+    const format = params.exportFormat as 'mov' | 'webm';
+    const started = await sceneManager.startProResExport(4096, 4096, fps, format); // UNIT 4K
     if (!started) {
         renderOverlay.style.display = 'none';
         return;
