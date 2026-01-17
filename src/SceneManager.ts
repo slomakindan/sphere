@@ -418,105 +418,97 @@ export class SceneManager {
         }
         return false;
     }
-    if(result && !result.error) {
-    this.isCapturingProRes = true;
-    this.exportSize = width;
-    this.currentTime = 0;
-    return true;
-}
-return false;
-    }
 
     public stopProResExport() {
-    this.isCapturingProRes = false;
-    this.isRenderingMotion = false;
-    if (typeof electronAPI !== 'undefined') {
-        electronAPI.stopFFmpegCapture();
+        this.isCapturingProRes = false;
+        this.isRenderingMotion = false;
+        if (typeof electronAPI !== 'undefined') {
+            electronAPI.stopFFmpegCapture();
+        }
+        this.onWindowResize();
     }
-    this.onWindowResize();
-}
 
     public async export4K() {
-    const size = 4096;
-    const originalSize = new THREE.Vector2();
-    this.renderer.getSize(originalSize);
+        const size = 4096;
+        const originalSize = new THREE.Vector2();
+        this.renderer.getSize(originalSize);
 
-    // Calculate scale factor for fidelity
-    const scaleFactor = size / originalSize.height;
+        // Calculate scale factor for fidelity
+        const scaleFactor = size / originalSize.height;
 
-    // Snapshot Fix: Ensure clear alpha is 0
-    this.renderer.setClearColor(0x000000, 0);
+        // Snapshot Fix: Ensure clear alpha is 0
+        this.renderer.setClearColor(0x000000, 0);
 
-    // Render at 4K with composer (includes bloom and tone mapping)
-    this.renderer.setSize(size, size, false);
-    this.composer.setSize(size, size);
-
-
-    // Scale visuals for export
-    this.sphere.setResolution(size, size);
-    const originalBloomRadius = this.bloomPass.radius;
-    const originalBloomStrength = this.bloomPass.strength;
-
-    this.bloomPass.radius *= scaleFactor;
-    // User requested slight reduction (0.85) to prevent overexposure/whiteout in 4K
-    this.bloomPass.strength *= 0.85;
-
-    // Force last pass to render to screen so we can read pixels
-    const lastPass = this.composer.passes[this.composer.passes.length - 1];
-    const wasRenderToScreen = lastPass.renderToScreen;
-    lastPass.renderToScreen = true;
-
-    this.composer.render();
-
-    lastPass.renderToScreen = wasRenderToScreen;
-
-    // Read pixels from WebGL framebuffer
-    const gl = this.renderer.getContext();
-    const pixels = new Uint8Array(size * size * 4);
-    gl.readPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+        // Render at 4K with composer (includes bloom and tone mapping)
+        this.renderer.setSize(size, size, false);
+        this.composer.setSize(size, size);
 
 
-    // Create canvas and draw pixels
-    const canvas = document.createElement('canvas');
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext('2d')!;
-    const imageData = ctx.createImageData(size, size);
+        // Scale visuals for export
+        this.sphere.setResolution(size, size);
+        const originalBloomRadius = this.bloomPass.radius;
+        const originalBloomStrength = this.bloomPass.strength;
 
-    // Flip Y axis (WebGL reads bottom-to-top, canvas is top-to-bottom)
-    for (let y = 0; y < size; y++) {
-        for (let x = 0; x < size; x++) {
-            const srcIdx = ((size - 1 - y) * size + x) * 4;
-            const dstIdx = (y * size + x) * 4;
-            imageData.data[dstIdx] = pixels[srcIdx];
-            imageData.data[dstIdx + 1] = pixels[srcIdx + 1];
-            imageData.data[dstIdx + 2] = pixels[srcIdx + 2];
-            imageData.data[dstIdx + 3] = pixels[srcIdx + 3];
+        this.bloomPass.radius *= scaleFactor;
+        // User requested slight reduction (0.85) to prevent overexposure/whiteout in 4K
+        this.bloomPass.strength *= 0.85;
+
+        // Force last pass to render to screen so we can read pixels
+        const lastPass = this.composer.passes[this.composer.passes.length - 1];
+        const wasRenderToScreen = lastPass.renderToScreen;
+        lastPass.renderToScreen = true;
+
+        this.composer.render();
+
+        lastPass.renderToScreen = wasRenderToScreen;
+
+        // Read pixels from WebGL framebuffer
+        const gl = this.renderer.getContext();
+        const pixels = new Uint8Array(size * size * 4);
+        gl.readPixels(0, 0, size, size, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+
+
+        // Create canvas and draw pixels
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d')!;
+        const imageData = ctx.createImageData(size, size);
+
+        // Flip Y axis (WebGL reads bottom-to-top, canvas is top-to-bottom)
+        for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+                const srcIdx = ((size - 1 - y) * size + x) * 4;
+                const dstIdx = (y * size + x) * 4;
+                imageData.data[dstIdx] = pixels[srcIdx];
+                imageData.data[dstIdx + 1] = pixels[srcIdx + 1];
+                imageData.data[dstIdx + 2] = pixels[srcIdx + 2];
+                imageData.data[dstIdx + 3] = pixels[srcIdx + 3];
+            }
         }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        // Export as PNG
+        const dataURL = canvas.toDataURL("image/png");
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = `UNIT-V3-PNG-${Date.now()}.png`;
+        link.click();
+
+        // Restore preview size and visuals
+        this.renderer.setSize(originalSize.x, originalSize.y, false);
+        this.composer.setSize(originalSize.x, originalSize.y);
+        this.sphere.setResolution(originalSize.x, originalSize.y);
+        this.bloomPass.radius = originalBloomRadius;
+        this.bloomPass.strength = originalBloomStrength;
     }
-
-    ctx.putImageData(imageData, 0, 0);
-
-    // Export as PNG
-    const dataURL = canvas.toDataURL("image/png");
-    const link = document.createElement('a');
-    link.href = dataURL;
-    link.download = `UNIT-V3-PNG-${Date.now()}.png`;
-    link.click();
-
-    // Restore preview size and visuals
-    this.renderer.setSize(originalSize.x, originalSize.y, false);
-    this.composer.setSize(originalSize.x, originalSize.y);
-    this.sphere.setResolution(originalSize.x, originalSize.y);
-    this.bloomPass.radius = originalBloomRadius;
-    this.bloomPass.strength = originalBloomStrength;
-}
 
 
     public async sendFrame(pixels: Uint8Array) {
-    if (typeof electronAPI !== 'undefined') {
-        await electronAPI.sendFrame(pixels);
+        if (typeof electronAPI !== 'undefined') {
+            await electronAPI.sendFrame(pixels);
+        }
     }
-}
 }
 
