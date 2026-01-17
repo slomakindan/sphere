@@ -314,8 +314,6 @@ const exportActions = {
             const baseParams = JSON.parse(JSON.stringify(params));
             baseParams.loopActive = true;
             baseParams.loopDuration = duration;
-            // Auto-fill frame
-            baseParams.sphereScale = 0.85;
 
             const cameraState = {
                 position: { x: sceneManager.camera.position.x, y: sceneManager.camera.position.y, z: sceneManager.camera.position.z },
