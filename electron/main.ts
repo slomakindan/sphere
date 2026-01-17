@@ -120,32 +120,32 @@ function createWindow() {
                 ];
 
                 if (options.maxSize) {
-                    // CBR MODE: Constant bitrate for predictable file size
+                    // EXTREME CBR: Accounting for WebM 500%+ overhead
                     const safeDuration = options.duration || 10.0;
 
-                    // Target 200KB to account for WebM overhead
-                    const targetBytes = 200 * 1024;
-                    const totalBits = targetBytes * 8;
+                    // Target only 35KB raw video (for 200KB final with overhead)
+                    const rawTargetBytes = 35 * 1024;
+                    const totalBits = rawTargetBytes * 8;
 
-                    // Use 45% of theoretical bitrate (WebM has high overhead)
-                    const targetBitrate = Math.floor((totalBits / safeDuration) * 0.45);
+                    // Use 100% of raw target (no margin needed, overhead is the margin)
+                    const targetBitrate = Math.floor(totalBits / safeDuration);
                     const safeBitrate = Math.max(targetBitrate, 5000);
 
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                    console.log(`[STICKER MODE - CBR]`);
-                    console.log(`Target: 200KB | Duration: ${safeDuration}s`);
-                    console.log(`CBR Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
+                    console.log(`[STICKER MODE - EXTREME LOW]`);
+                    console.log(`Target: 35KB raw (200KB with WebM overhead)`);
+                    console.log(`Duration: ${safeDuration}s`);
+                    console.log(`Ultra-low Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-                    // CBR settings with compatible options
-                    opts.push('-deadline good'); // Compatible with cpu-used 1-5
-                    opts.push('-cpu-used 4'); // Fast enough, good compression
+                    // Extreme CBR
+                    opts.push('-deadline good');
+                    opts.push('-cpu-used 4');
                     opts.push(`-b:v ${safeBitrate}`);
-                    opts.push(`-minrate ${safeBitrate}`); // CBR: min = max = target
-                    opts.push(`-maxrate ${safeBitrate}`); // CBR: min = max = target
+                    opts.push(`-minrate ${safeBitrate}`);
+                    opts.push(`-maxrate ${safeBitrate}`);
                     opts.push(`-bufsize ${Math.floor(safeBitrate * 2)}`);
-                    opts.push('-g 120'); // Keyframe every 4s
-                    // NO CRF - conflicts with bitrate mode
+                    opts.push('-g 240'); // Large keyframe interval to reduce overhead
                 } else {
                     // High Quality / Default
                     opts.push('-deadline realtime');
