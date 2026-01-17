@@ -309,32 +309,8 @@ export const fragmentShader = `
     uniform float uChaosAmplitude;
     uniform float uChaosSpeed;
 
-    // Hue Shift Helper
-    vec3 shiftHue(vec3 color, float shift) {
-        vec3 k = vec3(0.57735, 0.57735, 0.57735);
-        float cosAngle = cos(shift);
-        return vec3(color * cosAngle + cross(k, color) * sin(shift) + k * dot(k, color) * (1.0 - cosAngle));
-    }
-
-    void main() {
-        float dist = length(gl_PointCoord - vec2(0.5));
-        if (dist > 0.5) discard;
-
-        float particleFade = smoothstep(0.5, 0.1, dist) * 0.6;
-        
-        // Color Spot Engine Mixing
-        vec3 color = mix(uBaseColor, uAccentColor, vColorMask);
-        
-        // v3.0 Visual DNA Color Mapping
-        if (uImageEnabled && uImageColorMix > 0.0) {
-            vec4 texColor = texture2D(uImageTexture, vUV);
-            color = mix(color, texColor.rgb, uImageColorMix);
-        }
-        
-        // Add brightness at noise peaks
-        color += vNoise * 0.1;
-
-        // v3.3 Chaos Color Injection
+        // v3.3 Chaos Color Injection - DISABLED by user request
+        /*
         if (uChaosAmplitude > 0.0) {
             // Chaotic Hue Shift based on noise and time
              float chaosShift = sin(vNoise * 5.0 + uTime * uChaosSpeed) * uChaosAmplitude;
@@ -343,6 +319,7 @@ export const fragmentShader = `
              // Chaotic Brightness
              color += vec3(sin(vNoise * 10.0 + uTime * uChaosSpeed * 2.0)) * uChaosAmplitude * 0.2;
         }
+        */
 
         // Galaxy Swirl HDR Glow
         color += vDensity * uAccentColor;
