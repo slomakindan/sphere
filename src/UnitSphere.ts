@@ -140,8 +140,9 @@ export class UnitSphere {
             const progress = (time % duration) / duration;
 
             // Loop Mode
-            this.group.rotation.y = progress * Math.PI * 2.0;
-            this.stripsGroup.rotation.z = progress * Math.PI * 2.0;
+            // Instead of full 360 spin, we "breathe" (oscillate) to return to start
+            this.group.rotation.y = Math.sin(progress * Math.PI * 2.0) * 0.3;
+            this.stripsGroup.rotation.z = Math.sin(progress * Math.PI * 2.0) * 0.1;
             this.group.position.y = Math.sin(progress * Math.PI * 2.0) * 0.05;
         } else {
             // Standard Mode (Chaos is now handled in Shader)
