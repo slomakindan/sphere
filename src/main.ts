@@ -175,7 +175,7 @@ chaosFolder.add(params, 'chaosSpeed', 0.1, 5.0).name('Скорость').onChang
 // ... (Other folders remain) ...
 
 const exportFolder = gui.addFolder('▼ 5. Режим Рендера (Export)');
-exportFolder.add(params, 'exportFormat', ['mov', 'webm', 'apng']).name('Формат (Codec)').listen();
+exportFolder.add(params, 'exportFormat', ['mov', 'webm', 'apng', 'png_sequence']).name('Формат (Codec)').listen();
 exportFolder.add(params, 'exportResolution', ['4K', '2K', '1080p', '720p', '512']).name('Разрешение');
 exportFolder.add(params, 'exportFps', [24, 30, 60]).name('Кадры/сек (FPS)');
 exportFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность Лупа').onChange(v => sphere.setParams({ loopDuration: v }));
@@ -207,8 +207,70 @@ const exportActions = {
             case '512': size = 512; break;
         }
 
-        // Start FFmpeg
-        const format = params.exportFormat as 'mov' | 'webm' | 'apng';
+        // Start FFmpeg or PNG Sequence
+        const format = params.exportFormat as 'mov' | 'webm' | 'apng' | 'png_sequence';
+
+        // PNG Sequence: Direct file save
+        if (format === 'png_sequence') {
+            // Ask for folder
+            const folderPath = await electronAPI.selectFolder();
+            if (!folderPath) {
+                renderOverlay.style.display = 'none';
+                setAppState('IDLE');
+                return;
+            }
+
+            const startTime = performance.now();
+            const baseParams = JSON.parse(JSON.stringify(params));
+            baseParams.loopActive = true;
+            baseParams.loopDuration = duration;
+
+            const cameraState = {
+                position: { x: sceneManager.camera.position.x, y: sceneManager.camera.position.y, z: sceneManager.camera.position.z },
+                target: { x: sceneManager.controls.target.x, y: sceneManager.controls.target.y, z: sceneManager.controls.target.z }
+            };
+
+            for (let i = 0; i < totalFrames; i++) {
+                const t = (i / fps);
+                const frame = {
+                    time: t,
+                    audio: { level: 0, bass: 0, mid: 0, treble: 0 },
+                    params: baseParams,
+                    camera: cameraState
+                };
+
+                const pixels = await sceneManager.renderMotionFrame(frame, size);
+
+                // Save as PNG
+                const frameNumber = String(i).padStart(5, '0');
+                const filename = `frame_${frameNumber}.png`;
+                await electronAPI.savePNGFrame({ folderPath, filename, pixels, width: size, height: size });
+
+                // Update UI
+                const progress = ((i + 1) / totalFrames) * 100;
+                progressFill.style.width = `${progress}%`;
+                currentFrameEl.innerText = (i + 1).toString();
+
+                const elapsed = (performance.now() - startTime) / 1000;
+                const perFrame = elapsed / (i + 1);
+                const remaining = perFrame * (totalFrames - (i + 1));
+                etaEl.innerText = `${Math.ceil(remaining)}s remaining`;
+
+                if (i % 5 === 0) await new Promise(r => requestAnimationFrame(r));
+
+                if (isRenderingCancelled) {
+                    statusEl.innerText = 'Рендер отменен';
+                    break;
+                }
+            }
+
+            setAppState('IDLE');
+            renderOverlay.style.display = 'none';
+            stopRenderBtn.disabled = true;
+            isRenderingCancelled = false;
+            if (!isRenderingCancelled) statusEl.innerText = `PNG последовательность сохранена: ${folderPath}`;
+            return;
+        }
 
         // Sticker Logic: 512px + APNG = 250KB Limit
         const maxSize = (size === 512 && format === 'apng') ? 250 : 0;
