@@ -154,34 +154,33 @@ function createWindow() {
                 ];
 
                 if (options.maxSize) {
-                    // ABSURDLY LOW: Account for 200-300% WebM overhead
-                    // Target: 80KB raw video → 240-250KB with overhead
-                    const safeDuration = options.duration || 10.0;
-                    const rawTargetKB = 80;
-                    const bitrate = Math.floor((rawTargetKB * 8192) / safeDuration);
-                    const safeBitrate = Math.max(bitrate, 30000);
+                    // Sticker mode: Target ~256KB
+                    // Use CRF mode with reasonable quality instead of strict bitrate
+                    const safeDuration = options.duration || 3.0;
+
+                    // Calculate a reasonable bitrate: ~600kbps for small files
+                    const targetKB = 200; // Leave headroom for container overhead
+                    const bitrate = Math.floor((targetKB * 8 * 1024) / safeDuration);
+                    const safeBitrate = Math.max(bitrate, 100000); // At least 100kbps
 
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-                    console.log(`[STICKER MODE - FINAL ATTEMPT]`);
-                    console.log(`Target: 80KB raw (250KB with 200% overhead)`);
-                    console.log(`Duration: ${safeDuration}s`);
-                    console.log(`Ultra-low Bitrate: ${safeBitrate} bps (~${Math.floor(safeBitrate / 1000)}kbps)`);
+                    console.log(`[STICKER MODE - WebM]`);
+                    console.log(`Target: ${targetKB}KB  |  Duration: ${safeDuration}s`);
+                    console.log(`Bitrate: ${Math.floor(safeBitrate / 1000)}kbps`);
                     console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 
-                    // Ultra-low settings
-                    opts.push('-deadline good');
-                    opts.push('-cpu-used 4');
+                    opts.push('-deadline best'); // Best quality encoding
+                    opts.push('-cpu-used 2');    // Better quality (slower)
+                    opts.push('-crf 30');        // Reasonable quality (lower = better)
                     opts.push(`-b:v ${safeBitrate}`);
-                    opts.push(`-maxrate ${safeBitrate}`);
-                    opts.push(`-minrate ${Math.floor(safeBitrate * 0.5)}`);
-                    opts.push(`-bufsize ${Math.floor(safeBitrate * 2)}`);
-                    opts.push('-g 300'); // Very large GOP to reduce overhead
-                    opts.push('-crf 50'); // Very low quality to stay under bitrate
+                    opts.push(`-maxrate ${Math.floor(safeBitrate * 1.5)}`);
+                    opts.push(`-bufsize ${safeBitrate}`);
                 } else {
                     // High Quality / Default
-                    opts.push('-deadline realtime');
-                    opts.push('-cpu-used 4');
-                    opts.push('-crf 20');
+                    opts.push('-deadline good');
+                    opts.push('-cpu-used 2');
+                    opts.push('-crf 18'); // High quality
+                    opts.push('-b:v 2M'); // 2 Mbps for good quality
                 }
 
                 command.outputOptions(opts);
