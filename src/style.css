@@ -79,19 +79,33 @@ body {
 }
 
 /* Electron Window Drag Fix */
-#window-drag-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 40px;
+body {
   -webkit-app-region: drag;
-  z-index: 1000;
-  pointer-events: auto;
+  /* Allow dragging from anywhere by default */
 }
 
-#ui-panel {
+/* Interactive elements must be non-draggable */
+button,
+input,
+select,
+a,
+label,
+.dg,
+/* dat.GUI */
+#ui-panel,
+/* Sidebar itself */
+#canvas-mask,
+/* 3D Viewport interactions */
+#timeline-panel
+
+/* Timeline interactions */
+  {
   -webkit-app-region: no-drag;
+}
+
+#window-drag-bar {
+  display: none;
+  /* No longer needed */
 }
 
 #desktop-wrapper {

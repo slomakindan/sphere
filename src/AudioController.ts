@@ -150,4 +150,46 @@ export class AudioController {
             this.audioContext.currentTime - (this.sound as any)._startTime + (this.sound.offset || 0) :
             (this.sound.offset || 0);
     }
+
+    // Recording Logic
+    private recorder: MediaRecorder | null = null;
+    private recordedChunks: Blob[] = [];
+
+    public startRecording() {
+        if (!this.mediaStreamSource) return; // Only record if using Mic/System stream
+
+        try {
+            // We need to record the stream from the source
+            // Note: MediaStreamAudioSourceNode unfortunately doesn't export the stream directly back easily 
+            // but we kept 'stream' in useMicrophone scope. We should store it.
+            // Let's modify useMicrophone to store the stream.
+            if (this.currentStream) {
+                this.recorder = new MediaRecorder(this.currentStream);
+                this.recordedChunks = [];
+                this.recorder.ondataavailable = (e) => {
+                    if (e.data.size > 0) this.recordedChunks.push(e.data);
+                };
+                this.recorder.start();
+                console.log('Audio recording started');
+            }
+        } catch (e) {
+            console.error('Failed to start audio recording:', e);
+        }
+    }
+
+    public async stopRecording(): Promise<Blob | null> {
+        if (!this.recorder || this.recorder.state === 'inactive') return null;
+
+        return new Promise((resolve) => {
+            this.recorder!.onstop = () => {
+                const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                this.recordedChunks = [];
+                resolve(blob);
+            };
+            this.recorder!.stop();
+            console.log('Audio recording stopped');
+        });
+    }
+
+    private currentStream: MediaStream | null = null;
 }

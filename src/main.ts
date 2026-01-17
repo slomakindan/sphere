@@ -5,6 +5,14 @@ import { StateManager, SystemState } from './StateManager';
 import { MotionController } from './MotionController';
 import { TimelineController } from './TimelineController';
 
+// Electron Context Bridge Type
+declare const electronAPI: {
+    startFfmpegCapture: (options: any) => Promise<any>;
+    sendFrame: (data: Uint8Array) => Promise<void>;
+    stopFfmpegCapture: () => void;
+    saveAudioBlob: (buffer: ArrayBuffer) => Promise<string | null>;
+};
+
 const appContainer = document.getElementById('app') as HTMLElement;
 const sceneManager = new SceneManager(appContainer);
 const audioController = new AudioController(sceneManager.camera);
@@ -397,21 +405,36 @@ setAppState('IDLE');
 // Motion Logic
 let isRecordingMotion = false;
 
-recordMotionBtn.addEventListener('click', () => {
+recordMotionBtn.addEventListener('click', async () => {
     if (!isRecordingMotion) {
         setAppState('RECORDING');
         motionController.startRecording();
+        audioController.startRecording(); // Start Audio Recording
         recordMotionBtn.innerText = '⏹ Finish Capture';
         recordMotionBtn.classList.add('recording');
     } else {
         setAppState('IDLE');
         const buffer = motionController.stopRecording();
+        const audioBlob = await audioController.stopRecording(); // Stop Audio
+
         recordMotionBtn.innerText = '🔴 Capture Motion';
         recordMotionBtn.classList.remove('recording');
         captureInfo.innerText = `Buffer: ${buffer.length} frames`;
         renderMotionBtn.disabled = buffer.length === 0;
         statusEl.innerText = 'Motion Cached';
         motionController.saveToFile();
+
+        // Handle Recorded Audio
+        if (audioBlob && typeof electronAPI !== 'undefined') {
+            statusEl.innerText = 'Saving Audio...';
+            const arrayBuffer = await audioBlob.arrayBuffer();
+            const savedPath = await electronAPI.saveAudioBlob(arrayBuffer);
+            if (savedPath) {
+                currentAudioPath = savedPath; // Set for Export
+                statusEl.innerText = 'Audio Recorded & Linked';
+                console.log('Audio saved to:', savedPath);
+            }
+        }
 
 
         // Sync Timeline (v2.5) - Focused on the just-captured clip
@@ -422,8 +445,10 @@ recordMotionBtn.addEventListener('click', () => {
             timeline.setKeyframes(buffer.map(f => f.time));
 
             // Trigger UI update
-            const audioBuffer = audioController.getBuffer();
-            timeline.renderWaveform(audioBuffer);
+            // Note: If we just recorded mic, the buffer in audioController 
+            // refers to the LOADED file. We don't have visual waveform for mic stream easily yet.
+            // But if we recorded, we *could* load that blob back into audioController to show waveform?
+            // For now, let's just keep it simple.
         }
     }
     isRecordingMotion = !isRecordingMotion;
