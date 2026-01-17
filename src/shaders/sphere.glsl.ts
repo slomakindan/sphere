@@ -207,12 +207,12 @@ export const vertexShader = `
         float density = 0.0;
 
         if (uSwirlEnabled) {
-            // 1. Initial Volumetric Scattering (Make it a cloud, not a shell)
-            // Use static noise based on initial position to scatter particles radially
-            float staticNoise = snoise(pos * 30.0);
-            float volumeSpread = 1.0; // Spread width
-            // Original radius is 1.5. Scatter between 0.5 and 2.5
-            pos = normalize(pos) * (1.5 + staticNoise * volumeSpread);
+            // 1. Initial Volumetric Scattering (Solid Ball distribution)
+            // Use static noise to place particles anywhere from center to edge
+            float staticNoise = snoise(pos * 42.0); // Different seed
+            // Distribute particles from r=0.0 to r=3.0
+            // abs(staticNoise) gives 0.0 to 1.0 distribution
+            pos = normalize(pos) * (0.1 + abs(staticNoise) * 3.0); 
 
             // 2. Chaotic Rotation
             float dist = length(pos);
