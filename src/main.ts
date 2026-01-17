@@ -168,6 +168,13 @@ centerFolder.add(params, 'showStrips').name('Полосы').onChange(v => sphere
 centerFolder.add(params, 'stripsOpacity', 0, 1.0).name('Непрозрачность').onChange(v => sphere.setParams({ stripsOpacity: v }));
 centerFolder.addColor(params, 'stripsColor').name('Цвет полос').onChange(v => sphere.setParams({ stripsColor: v }));
 
+// Moved Galaxy/Swirl Controls to Center
+centerFolder.add(params, 'swirlEnabled').name('Галактика (Swirl)').onChange(v => sphere.setParams({ swirlEnabled: v }));
+centerFolder.add(params, 'swirlSpeed', 0, 2.0).name('Скорость вращ.').onChange(v => sphere.setParams({ swirlSpeed: v }));
+centerFolder.add(params, 'twistAmount', -5.0, 5.0).name('Закручивание').onChange(v => sphere.setParams({ twistAmount: v }));
+centerFolder.add(params, 'swirlDetail', 1, 8).step(1).name('Детализация вихря').onChange(v => sphere.setParams({ swirlDetail: v }));
+centerFolder.add(params, 'clusterIntensity', 1.0, 10.0).name('Свечение вихря').onChange(v => sphere.setParams({ clusterIntensity: v }));
+
 
 
 const logicFolder = gui.addFolder('▼ 1.1 Поведение (Logic)');
@@ -389,12 +396,7 @@ audioFolder.add(params, 'audioStrength', 0, 5.0).name('Влияние').onChange
 audioFolder.add(params, 'smoothing', 0, 0.99).name('Сглаживание').onChange(v => audioController.smoothing = v);
 audioFolder.add(params, 'sensitivity', 0.1, 5.0).name('Чувствительность').onChange(v => audioController.sensitivity = v);
 
-const swirlFolder = gui.addFolder('▼ 5. Галактика');
-swirlFolder.add(params, 'swirlEnabled').name('Включить').onChange(v => sphere.setParams({ swirlEnabled: v }));
-swirlFolder.add(params, 'swirlSpeed', 0, 2.0).name('Скорость').onChange(v => sphere.setParams({ swirlSpeed: v }));
-swirlFolder.add(params, 'twistAmount', -5.0, 5.0).name('Закручивание').onChange(v => sphere.setParams({ twistAmount: v }));
-swirlFolder.add(params, 'swirlDetail', 1, 8).step(1).name('Детализация').onChange(v => sphere.setParams({ swirlDetail: v }));
-swirlFolder.add(params, 'clusterIntensity', 1.0, 10.0).name('Свечение').onChange(v => sphere.setParams({ clusterIntensity: v }));
+// Galaxy Folder Removed (Merged into Center)
 
 
 
