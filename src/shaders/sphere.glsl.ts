@@ -50,6 +50,10 @@ export const vertexShader = `
     uniform bool uLoopActive;
     uniform float uLoopDuration;
 
+    // v3.3 Chaos Mode
+    uniform float uChaosAmplitude;
+    uniform float uChaosSpeed;
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -217,6 +221,26 @@ export const vertexShader = `
                 float radius = uLoopDuration * uSpeed * 0.5; 
                 vec3 loopOffset = vec3(cos(angle), sin(angle), cos(angle) * 0.5 + sin(angle) * 0.5) * radius;
                 noisePos = normal * uNoiseDensity + loopOffset;
+            } else {
+                // Standard Mode with Chaos
+                float chaosTime = dynamicTime;
+                
+                // Chaos Injection
+                if (uChaosAmplitude > 0.0) {
+                    // Warp time non-linearly
+                    chaosTime += sin(dynamicTime * uChaosSpeed * 2.0) * uChaosAmplitude * 0.5;
+                    
+                    // Warp spatial coordinates (Domain Warping)
+                    vec3 warp = vec3(
+                        sin(normal.z * 4.0 + dynamicTime * uChaosSpeed),
+                        cos(normal.x * 4.0 + dynamicTime * uChaosSpeed),
+                        sin(normal.y * 4.0 + dynamicTime * uChaosSpeed)
+                    ) * uChaosAmplitude * 0.2;
+                    
+                    noisePos += warp;
+                }
+                
+                noisePos.z += chaosTime; 
             }
 
             noise = fbm(noisePos, uOctaves, uNoiseScale);
