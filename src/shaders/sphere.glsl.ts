@@ -427,6 +427,17 @@ export const vertexShader = `
 
         vNoise = noise;
         
+        // v4.3 Containment - apply to pos BEFORE finalPosition to catch all effects
+        if (uContainmentStrength > 0.0) {
+            float dist = length(pos);
+            if (dist > uContainmentRadius) {
+                // Smoothly pull particles back toward the containment radius
+                float excess = dist - uContainmentRadius;
+                float pullStrength = smoothstep(0.0, 1.0, excess * 0.5) * uContainmentStrength;
+                pos = normalize(pos) * mix(dist, uContainmentRadius, pullStrength);
+            }
+        }
+        
         // v3.4 Seamless Color Spots
         vec3 spotPos;
         if (uLoopActive) {
