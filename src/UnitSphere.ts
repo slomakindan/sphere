@@ -180,9 +180,18 @@ export class UnitSphere {
             }
         } else {
             // Standard Mode (Chaos is now handled in Shader)
-            this.group.rotation.y = time * 0.12;
-            this.stripsGroup.rotation.z = time * 0.25;
-            this.group.position.y = Math.sin(time * 0.4) * 0.05;
+            const isStatic = this.material.uniforms.uStaticMode?.value;
+
+            if (!isStatic) {
+                this.group.rotation.y = time * 0.12;
+                this.stripsGroup.rotation.z = time * 0.25;
+                this.group.position.y = Math.sin(time * 0.4) * 0.05;
+            } else {
+                // Lock position when Фикс.Центр is on
+                this.group.rotation.y = 0;
+                this.stripsGroup.rotation.z = 0;
+                this.group.position.y = 0;
+            }
         }
 
         // Pass Chaos params to Shader (Internal Chaos)
