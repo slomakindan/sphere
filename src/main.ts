@@ -850,9 +850,17 @@ audioInput.addEventListener('change', async (e) => {
 });
 
 systemAudioBtn.addEventListener('click', async () => {
-    await audioController.useMicrophone();
-    statusEl.innerText = 'System Link Active';
-    systemAudioBtn.classList.add('active');
+    if (systemAudioBtn.classList.contains('active')) {
+        // Turn OFF
+        audioController.stopSystemAudio();
+        systemAudioBtn.classList.remove('active');
+        statusEl.innerText = 'System Link Inactive';
+    } else {
+        // Turn ON
+        await audioController.useMicrophone();
+        statusEl.innerText = 'System Link Active';
+        systemAudioBtn.classList.add('active');
+    }
 });
 
 playPauseBtn.addEventListener('click', () => {

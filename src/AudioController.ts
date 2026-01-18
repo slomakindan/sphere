@@ -72,6 +72,19 @@ export class AudioController {
         }
     }
 
+    public stopSystemAudio() {
+        if (this.mediaStreamSource) {
+            this.mediaStreamSource.disconnect();
+            this.mediaStreamSource = null;
+        }
+        // Revert to file playback/silence
+        if (this.analyser && (this.analyser as any).analyser) {
+            (this.analyser as any).analyser.disconnect();
+            // Re-create simple analyser for file playback if needed or just null it
+            this.analyser = new THREE.AudioAnalyser(this.sound, 1024);
+        }
+    }
+
     public update() {
         if (!this.analyser) return;
 
