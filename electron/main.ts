@@ -327,6 +327,25 @@ function createWindow() {
             return { success: false, error: String(e) };
         }
     });
+
+    // Save Audio Blob for export
+    ipcMain.handle('save-audio-blob', async (event, arrayBuffer: ArrayBuffer) => {
+        const fs = require('fs');
+        const os = require('os');
+        const path = require('path');
+
+        try {
+            const tempDir = os.tmpdir();
+            const audioPath = path.join(tempDir, `sphere-audio-${Date.now()}.webm`);
+            const buffer = Buffer.from(arrayBuffer);
+            fs.writeFileSync(audioPath, buffer);
+            console.log('Audio saved to:', audioPath);
+            return audioPath;
+        } catch (e) {
+            console.error('Error saving audio blob:', e);
+            return null;
+        }
+    });
 }
 
 app.on('before-quit', () => {
