@@ -592,6 +592,7 @@ export const fragmentShader = `
     uniform vec3 uMidColor;       // Color triggered by mid frequencies (voice)
     uniform vec3 uTrebleColor;    // Color triggered by treble frequencies
     uniform float uAudioColorMix; // How much audio affects color (0-1)
+    uniform bool uAudioColorsEnabled; // Master toggle for audio colors
 
     // Hue Shift Helper
     vec3 shiftHue(vec3 color, float shift) {
@@ -616,37 +617,42 @@ export const fragmentShader = `
         }
         
         // v5.0 Audio-Reactive Color Mix
-        if (uAudioColorMix > 0.0) {
-            // Calculate audio color contribution
-            vec3 audioColor = vec3(0.0);
-            float totalAudio = 0.0;
+        if (uAudioColorsEnabled && uAudioColorMix > 0.0) {
+            // New logic: Weighted blending without aggressive normalization to keep colors vibrant
+            vec3 targetAudioColor = vec3(0.0);
+            float weight = 0.0;
             
-            // Bass adds deep color (beats, drums)
-            if (uBass > 0.05) {
-                audioColor += uBassColor * uBass * 2.0;
-                totalAudio += uBass;
+            // Bass (Deep/Logic) - stronger weight
+            if (uBass > 0.01) {
+                targetAudioColor += uBassColor * uBass * 3.0; // Boosted intensity
+                weight += uBass;
             }
             
-            // Mid adds voice color (vocals, instruments)
-            if (uMid > 0.05) {
-                audioColor += uMidColor * uMid * 2.5;
-                totalAudio += uMid;
+            // Mid (Voice) - add to mix
+            if (uMid > 0.01) {
+                targetAudioColor += uMidColor * uMid * 3.0;
+                weight += uMid;
             }
             
-            // Treble adds shimmer color (hi-hats, brightness)
-            if (uTreble > 0.05) {
-                audioColor += uTrebleColor * uTreble * 2.0;
-                totalAudio += uTreble;
+            // Treble (Shimmer) 
+            if (uTreble > 0.01) {
+                targetAudioColor += uTrebleColor * uTreble * 3.0;
+                weight += uTreble;
             }
             
-            // Normalize and mix
-            if (totalAudio > 0.1) {
-                audioColor = audioColor / (totalAudio + 0.5);
-                color = mix(color, audioColor, uAudioColorMix * smoothstep(0.0, 0.3, totalAudio));
+            // Apply if there is sound
+            if (weight > 0.01) {
+                // Mix based on how loud the sound is (dynamic strength)
+                float mixFactor = uAudioColorMix * clamp(weight * 0.5, 0.0, 1.0);
+                
+                // Use MAX blending to prevent washing out (keep dominant colors)
+                // mix() can sometimes dull colors. Let's try direct influence.
+                color = mix(color, targetAudioColor, mixFactor);
             }
             
-            // Add vortex glow on mid (voice) frequencies
-            float voiceGlow = smoothstep(0.1, 0.5, uMid) * vDensity * 2.0;
+            // Separated Voice Glow (Mid frequencies)
+            // Adds a halo effect specifically for vocals
+            float voiceGlow = smoothstep(0.1, 0.6, uMid) * vDensity * 3.0;
             color += uMidColor * voiceGlow * uAudioColorMix;
         }
         

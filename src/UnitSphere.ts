@@ -42,6 +42,7 @@ export class UnitSphere {
                 uMidColor: { value: new THREE.Color(0x00ff88) },     // Cyan/green for voice
                 uTrebleColor: { value: new THREE.Color(0x00aaff) },  // Bright blue for treble
                 uAudioColorMix: { value: 0.7 },
+                uAudioColorsEnabled: { value: true },
                 uSpotScale: { value: 2.0 },
                 uSpotThreshold: { value: 0.6 },
                 uAudioInfluence: { value: 1.0 },
@@ -249,6 +250,7 @@ export class UnitSphere {
         if (params.midColor !== undefined) u.uMidColor.value.set(params.midColor);
         if (params.trebleColor !== undefined) u.uTrebleColor.value.set(params.trebleColor);
         if (params.audioColorMix !== undefined) u.uAudioColorMix.value = params.audioColorMix;
+        if (params.audioColorsEnabled !== undefined) u.uAudioColorsEnabled.value = params.audioColorsEnabled;
         if (params.staticMode !== undefined) u.uStaticMode.value = params.staticMode;
 
         // Galaxy Swirl Mode (v2.5)

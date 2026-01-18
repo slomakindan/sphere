@@ -143,6 +143,7 @@ const params = {
     imageDisplacementFactor: 0.0,
     imageColorMix: 0.0,
     // v5.0 Audio Colors
+    audioColorsEnabled: true,
     bassColor: '#ff3300',
     midColor: '#00ff88',
     trebleColor: '#00aaff',
@@ -521,6 +522,7 @@ audioFolder.add(params, 'audioStrength', 0.0, 5.0).name('Сила Реакции
 
 // v5.0 Audio Colors
 const audioColorFolder = gui.addFolder('▼ 4.1 Аудио Цвета (Audio Colors)');
+audioColorFolder.add(params, 'audioColorsEnabled').name('Включить цвета').onChange(v => sphere.setParams({ audioColorsEnabled: v }));
 audioColorFolder.addColor(params, 'bassColor').name('Бас (Низкие)').onChange(v => sphere.setParams({ bassColor: new THREE.Color(v) }));
 audioColorFolder.addColor(params, 'midColor').name('Голос (Средние)').onChange(v => sphere.setParams({ midColor: new THREE.Color(v) }));
 audioColorFolder.addColor(params, 'trebleColor').name('Верха (Высокие)').onChange(v => sphere.setParams({ trebleColor: new THREE.Color(v) }));
