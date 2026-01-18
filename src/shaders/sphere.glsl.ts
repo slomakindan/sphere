@@ -291,7 +291,7 @@ export const vertexShader = `
         if (uVortexEnabled) {
             float vortexTime = effectiveTime * uVortexSpeed;
             for (int i = 0; i < 5; i++) {
-                 if (i >= uVortexCount) break;
+                 if (float(i) >= uVortexCount) break;
                  // ... (simple vortex logic) ...
                  // We need to capture the fact that this particle is being moved by a vortex
                  // The actual vortex logic was inline. Let's look at where it was.
@@ -306,15 +306,15 @@ export const vertexShader = `
         if (uMorphProgress > 0.0) {
             vec3 targetPos = pos;
             
-            if (uMorphTarget == 1.0) {
+            if (uMorphTarget == 1) {
                 targetPos = sphereToCube(pos);
-            } else if (uMorphTarget == 2.0) {
-                targetPos = sphereToTorus(pos, 1.0, 0.4); // Retaining original torus parameters
-            } else if (uMorphTarget == 3.0) {
+            } else if (uMorphTarget == 2) {
+                targetPos = sphereToTorus(pos, 1.0, 0.4);
+            } else if (uMorphTarget == 3) {
                 targetPos = sphereToTwist(pos);
-            } else if (uMorphTarget == 4.0) {
+            } else if (uMorphTarget == 4) {
                 targetPos = sphereToImageGrid(pos);
-            } else if (uMorphTarget == 5.0) { // NEW: DNA Helix
+            } else if (uMorphTarget == 5) {
                 targetPos = sphereToHelix(pos);
             }
             
