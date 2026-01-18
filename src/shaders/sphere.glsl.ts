@@ -533,6 +533,7 @@ export const fragmentShader = `
     uniform vec3 uAccentColor;
     uniform float uOpacity;
     uniform float uTime;
+    uniform bool uStaticMode;
 
     
     // v3.0 Visual DNA
