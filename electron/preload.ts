@@ -6,5 +6,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     stopFFmpegCapture: () => ipcRenderer.invoke('stop-ffmpeg-capture'),
     selectFolder: () => ipcRenderer.invoke('select-folder'),
     savePNGFrame: (data: any) => ipcRenderer.invoke('save-png-frame', data),
-    saveAudioBlob: (buffer: ArrayBuffer) => ipcRenderer.invoke('save-audio-blob', buffer)
+    saveAudioBlob: (buffer: ArrayBuffer) => ipcRenderer.invoke('save-audio-blob', buffer),
+    saveAudioFile: (buffer: ArrayBuffer, filename: string) => ipcRenderer.invoke('save-audio-file', buffer, filename)
 });

@@ -797,9 +797,21 @@ loadAudioBtn.addEventListener('click', () => audioInput.click());
 audioInput.addEventListener('change', async (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (file) {
-        // Capture path for export (Electron specific)
-        currentAudioPath = (file as any).path || null;
-        console.log('[Audio] File loaded, currentAudioPath:', currentAudioPath);
+        // Save audio file through IPC for export (Electron)
+        if (typeof electronAPI !== 'undefined' && (electronAPI as any).saveAudioFile) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                currentAudioPath = await (electronAPI as any).saveAudioFile(arrayBuffer, file.name);
+                console.log('[Audio] File saved via IPC, currentAudioPath:', currentAudioPath);
+            } catch (err) {
+                console.error('[Audio] Failed to save audio file:', err);
+                currentAudioPath = null;
+            }
+        } else {
+            // Fallback for web mode (won't work for export)
+            currentAudioPath = (file as any).path || null;
+            console.log('[Audio] File loaded (fallback), currentAudioPath:', currentAudioPath);
+        }
 
         statusEl.innerText = 'Scanning frequency...';
         const name = await audioController.loadFile(file);

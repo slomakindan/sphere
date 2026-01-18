@@ -346,6 +346,26 @@ function createWindow() {
             return null;
         }
     });
+
+    // Save Audio File (for loaded audio files)
+    ipcMain.handle('save-audio-file', async (event, arrayBuffer: ArrayBuffer, filename: string) => {
+        const fs = require('fs');
+        const os = require('os');
+        const path = require('path');
+
+        try {
+            const tempDir = os.tmpdir();
+            const ext = path.extname(filename) || '.mp3';
+            const audioPath = path.join(tempDir, `sphere-audio-${Date.now()}${ext}`);
+            const buffer = Buffer.from(arrayBuffer);
+            fs.writeFileSync(audioPath, buffer);
+            console.log('[Audio] File saved to:', audioPath);
+            return audioPath;
+        } catch (e) {
+            console.error('Error saving audio file:', e);
+            return null;
+        }
+    });
 }
 
 app.on('before-quit', () => {
