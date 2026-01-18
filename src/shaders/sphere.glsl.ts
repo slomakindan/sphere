@@ -92,8 +92,9 @@ export const vertexShader = `
     varying float vAccent;
     varying float vColorMask;
     varying float vDistToCenter;
-    varying float vDensity; // For Cluster Glow
-    varying vec2 vUV; // For Visual DNA
+    varying float vDensity;
+    varying float vStructureIntensity; // Added for Hide Chaos feature
+    varying vec2 vUV;
 
     // Simplex Noise (Ashima Arts)
     vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
