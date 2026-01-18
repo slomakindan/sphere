@@ -332,7 +332,7 @@ export const vertexShader = `
             // Calculate rotation angle based on band
             float vortexTime;
             if (uLoopActive) {
-                float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
                 vortexTime = angle;
             } else {
                 vortexTime = effectiveTime * uVortexSpeed;
@@ -394,7 +394,7 @@ export const vertexShader = `
 
             // v3.2 Seamless Loop Mode
             if (uLoopActive) {
-                float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
                 // Calculate radius to match perceived speed: Length = Speed * Duration
                 // Circle Circumference (2*PI*R) = Speed * Duration => R = (Speed * Duration) / 2PI
                 // We use a predefined radius multiplier for strong visual movement
@@ -445,7 +445,7 @@ export const vertexShader = `
         // v3.4 Seamless Color Spots
         vec3 spotPos;
         if (uLoopActive) {
-            float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+            float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
             // Use different radius/offset for spots to avoid looking exactly like the shape noise
             float radius = uLoopDuration * 0.1; 
             vec3 loopOffset = vec3(cos(angle), sin(angle), 0.0) * radius;
