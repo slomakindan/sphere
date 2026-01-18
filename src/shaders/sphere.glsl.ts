@@ -451,22 +451,25 @@ export const vertexShader = `
             }
         }
         
-        // v4.5 Flocking - cluster particles into streams like birds
+        // v4.5 Flocking - cluster particles into smooth flowing streams
         if (uFlockingStrength > 0.0) {
-            // Create a "flock grid" based on noise - particles snap toward flock centers
             float flockTime = uTime * uFlockingSpeed;
-            vec3 flockSeed = floor(pos * uFlockingScale) / uFlockingScale; // Discretize space
             
-            // Calculate flock center offset using noise
-            float flockNoise1 = snoise(flockSeed + vec3(flockTime, 0.0, 0.0));
-            float flockNoise2 = snoise(flockSeed + vec3(0.0, flockTime, 100.0));
-            float flockNoise3 = snoise(flockSeed + vec3(200.0, 0.0, flockTime));
+            // Use smooth noise to create flowing "lanes" that particles follow
+            // Higher scale = more lanes/streams, lower = fewer wider streams
+            vec3 streamPos = pos * uFlockingScale;
             
-            vec3 flockCenter = flockSeed + vec3(flockNoise1, flockNoise2, flockNoise3) * 0.2;
+            // Create a sinusoidal pattern based on position to form "lanes"
+            float lane1 = sin(streamPos.x * 3.14159 + flockTime) * sin(streamPos.y * 2.0);
+            float lane2 = sin(streamPos.y * 3.14159 + flockTime * 0.7) * sin(streamPos.z * 2.0);
+            float lane3 = sin(streamPos.z * 3.14159 + flockTime * 1.3) * sin(streamPos.x * 2.0);
             
-            // Pull particles toward their flock center
-            vec3 toFlock = flockCenter - pos;
-            pos += toFlock * uFlockingStrength * 0.5;
+            // Create smooth stream displacement (tangential, not radial)
+            vec3 streamDir = normalize(cross(normal, vec3(lane1, lane2, lane3)));
+            float streamIntensity = (sin(snoise(streamPos + flockTime) * 6.28) + 1.0) * 0.5;
+            
+            // Concentrate particles into streams by pulling toward stream centers
+            pos += streamDir * streamIntensity * uFlockingStrength * 0.3;
         }
         
         // v3.4 Seamless Color Spots
