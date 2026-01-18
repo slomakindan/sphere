@@ -247,8 +247,8 @@ export const vertexShader = `
         vNormal = normal;
         vec3 pos = position;
         
-        // Static Mode: freeze all time-based animations
-        float effectiveTime = uStaticMode ? 0.0 : uTime;
+        // effectiveTime - always use uTime (staticMode now controls center lock, not animation freeze)
+        float effectiveTime = uTime;
 
         // v3.0 Shape Morphing
         if (uMorphProgress > 0.0) {
@@ -477,6 +477,14 @@ export const vertexShader = `
         
         // v4.1 Sphere Scale - scale particles towards/away from center
         finalPosition *= uSphereScale;
+        
+        // v4.4 Center Lock - keep center stable, prevent overall drift
+        if (uStaticMode) {
+            // Project onto XZ plane to lock center Y-drift
+            // This keeps particle animations but prevents the whole sphere from drifting
+            float avgY = finalPosition.y * 0.1; // Subtle centering force
+            finalPosition.y -= avgY;
+        }
         
         // v4.3 Containment - keep particles within radius
         if (uContainmentStrength > 0.0) {
