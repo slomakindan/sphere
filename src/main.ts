@@ -500,6 +500,7 @@ noiseFolder.add(params, 'radialBias', -1.0, 1.0).name('Радиальное см
 
 const audioFolder = gui.addFolder('▼ 4. Аудио');
 audioFolder.add(params, 'audioStrength', 0, 5.0).name('Влияние').onChange(v => sphere.setParams({ audioStrength: v }));
+audioFolder.add(params, 'radialBias', -1.0, 1.0).name('Направление (←→)').onChange(v => sphere.setParams({ radialBias: v }));
 audioFolder.add(params, 'smoothing', 0, 0.99).name('Сглаживание').onChange(v => audioController.smoothing = v);
 audioFolder.add(params, 'sensitivity', 0.1, 5.0).name('Чувствительность').onChange(v => audioController.sensitivity = v);
 
