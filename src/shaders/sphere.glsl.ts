@@ -516,7 +516,14 @@ export const vertexShader = `
         
         // v4.5 Flocking - cluster particles into smooth flowing streams
         if (uFlockingStrength > 0.0) {
-            float flockTime = uTime * uFlockingSpeed;
+            float flockTime;
+            if (uLoopActive) {
+                // Use circular time for seamless looping
+                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                flockTime = angle * uFlockingSpeed;
+            } else {
+                flockTime = effectiveTime * uFlockingSpeed;
+            }
             
             // Use smooth noise to create flowing "lanes" that particles follow
             // Higher scale = more lanes/streams, lower = fewer wider streams
@@ -530,6 +537,9 @@ export const vertexShader = `
             // Create smooth stream displacement (tangential, not radial)
             vec3 streamDir = normalize(cross(normal, vec3(lane1, lane2, lane3)));
             float streamIntensity = (sin(snoise(streamPos + flockTime) * 6.28) + 1.0) * 0.5;
+            
+            // Track structure intensity for Hide Chaos feature
+            vStructureIntensity = max(vStructureIntensity, streamIntensity);
             
             // Concentrate particles into streams by pulling toward stream centers
             pos += streamDir * streamIntensity * uFlockingStrength * 0.3;
