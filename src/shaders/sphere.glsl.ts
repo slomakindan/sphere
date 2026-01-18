@@ -19,6 +19,10 @@ export const vertexShader = `
     uniform float uOrbitChaos;
     uniform vec3 uCameraPosition; // NEW
     uniform float uViewClear;     // NEW
+
+    // v5.1 Global Control
+    uniform float uGlobalSpeed;
+    uniform bool uHideChaos;
     
     // v3.0 Shape Morphing
     uniform int uMorphTarget; // 0=sphere, 1=cube, 2=torus
