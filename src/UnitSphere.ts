@@ -47,6 +47,9 @@ export class UnitSphere {
                 uSpotThreshold: { value: 0.6 },
                 uAudioInfluence: { value: 1.0 },
                 uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                // v5.1 Global Control
+                uGlobalSpeed: { value: 1.0 },
+                uHideChaos: { value: false },
                 // v2.5 Galaxy Swirl Mode
 
                 uSwirlEnabled: { value: false },
@@ -251,7 +254,12 @@ export class UnitSphere {
         if (params.trebleColor !== undefined) u.uTrebleColor.value.set(params.trebleColor);
         if (params.audioColorMix !== undefined) u.uAudioColorMix.value = params.audioColorMix;
         if (params.audioColorsEnabled !== undefined) u.uAudioColorsEnabled.value = params.audioColorsEnabled;
+        if (params.audioColorsEnabled !== undefined) u.uAudioColorsEnabled.value = params.audioColorsEnabled;
         if (params.staticMode !== undefined) u.uStaticMode.value = params.staticMode;
+
+        // v5.1 Global Control
+        if (params.globalSpeed !== undefined) u.uGlobalSpeed.value = params.globalSpeed;
+        if (params.hideChaos !== undefined) u.uHideChaos.value = params.hideChaos;
 
         // Galaxy Swirl Mode (v2.5)
         if (params.swirlEnabled !== undefined) u.uSwirlEnabled.value = params.swirlEnabled;

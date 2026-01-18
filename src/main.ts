@@ -180,19 +180,28 @@ const params = {
     // v4.5 Flocking
     flockingStrength: 0.0,
     flockingScale: 3.0,
-    flockingSpeed: 0.3
+    flockingSpeed: 0.3,
+    // v5.1 Global Settings
+    globalSpeed: 1.0,
+    hideChaos: false
 };
 
 // UI: dat.GUI Setup
-const gui = new dat.GUI({ autoPlace: false });
+const gui = new dat.GUI({ width: 350 });
+
+// v5.1 Global Settings
+const globalFolder = gui.addFolder('▼ 0. Глобальные Настройки (Global)');
+globalFolder.add(params, 'globalSpeed', 0.0, 3.0).name('Общая Скорость').onChange(v => sphere.setParams({ globalSpeed: v }));
+globalFolder.add(params, 'hideChaos').name('Только Структуры (Hide Chaos)').onChange(v => sphere.setParams({ hideChaos: v }));
+
 document.getElementById('gui-container')?.appendChild(gui.domElement);
 
 // Default Sphere Params (clean state)
 const defaultSphereParams = {
-    baseColor: '#ffffff',
-    accentColor: '#ffffff',
-    spotScale: 0.0,
-    spotThreshold: 0.0,
+    baseColor: '#f2f4f7',
+    accentColor: '#ff0000',
+    spotScale: 2.0,
+    spotThreshold: 0.6,
     opacity: 1.0,
     speed: 0.2,
     density: 1.0,

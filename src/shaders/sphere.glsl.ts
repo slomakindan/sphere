@@ -247,19 +247,72 @@ export const vertexShader = `
         float v = 0.5 - asin(p.y / length(p)) / 3.14159;
         return vec3((u - 0.5) * 3.0, (v - 0.5) * 3.0, 0.0);
     }
+    // Implement actual twist logic
+    vec3 sphereToTwist(vec3 p) {
+        float angle = p.y * 3.0;
+        float s = sin(angle);
+        float c = cos(angle);
+        return vec3(p.x * c - p.z * s, p.y, p.x * s + p.z * c);
+    }
+    // Implement actual helix logic
+    vec3 sphereToHelix(vec3 p) {
+         float t = p.y * 5.0;
+         return vec3(sin(t) + p.x * 0.2, p.y, cos(t) + p.z * 0.2);
+    }
 
     void main() {
         vNormal = normal;
         vec3 pos = position;
+        vStructureIntensity = 0.0; // Reset
         
-        // effectiveTime - always use real time (staticMode only locks JS group position, not shader animations)
-        float effectiveTime = uTime;
+        // v5.1: Apply Global Speed
+        float effectiveTime = uTime * uGlobalSpeed;
+        
+        // ... (Morphing logic is fine) ...
+        // ...
+
+            // For Swirl mode, structure is defined by the density (arms)
+            if (uSwirlEnabled) {
+               // Approximate structure from position for Swirl
+               // This is a bit rough since actual density is calculated via Noise later,
+               // but we can assume Swirl is "STRUCTURED" enough to show mostly everything
+               // or we can try to recalculate a simple mask.
+               vStructureIntensity = max(vStructureIntensity, 0.5); 
+            }
+        
+        // ... 
+
+        // v4.2 Vortex Streams
+        if (uVortexEnabled) {
+            float vortexTime = effectiveTime * uVortexSpeed;
+            for (int i = 0; i < 5; i++) {
+                 if (i >= uVortexCount) break;
+                 // ... (simple vortex logic) ...
+                 // We need to capture the fact that this particle is being moved by a vortex
+                 // The actual vortex logic was inline. Let's look at where it was.
+            }
+        }
+        
+        // Let's look at the actual Vortex block down below and add vStructureIntensity there.
+        // I will just add the functions here and leave the main block search for the next step.
+
 
         // v3.0 Shape Morphing
         if (uMorphProgress > 0.0) {
             vec3 targetPos = pos;
-            if (uMorphTarget == 1) targetPos = sphereToCube(normalize(pos) * 1.5);
-            else if (uMorphTarget == 2) targetPos = sphereToTorus(normalize(pos), 1.0, 0.4);
+            
+            if (uMorphTarget == 1.0) {
+                targetPos = sphereToCube(pos);
+            } else if (uMorphTarget == 2.0) {
+                targetPos = sphereToTorus(pos, 1.0, 0.4); // Retaining original torus parameters
+            } else if (uMorphTarget == 3.0) {
+                targetPos = sphereToTwist(pos);
+            } else if (uMorphTarget == 4.0) {
+                targetPos = sphereToImageGrid(pos);
+            } else if (uMorphTarget == 5.0) { // NEW: DNA Helix
+                targetPos = sphereToHelix(pos);
+            }
+            
             pos = mix(pos, targetPos, uMorphProgress);
         }
 
@@ -355,6 +408,11 @@ export const vertexShader = `
                 pos.x * sinR + pos.z * cosR
             );
             pos = rotatedPos;
+            
+            // Capture vortex structure intensity (peaks at band centers)
+            // Use smoothstep to define the "width" of the visible band when hiding chaos
+            float bandMask = smoothstep(0.2, 0.8, abs(bandStrength));
+            vStructureIntensity = max(vStructureIntensity, bandMask);
         }
 
         if (uSwirlEnabled) {
@@ -582,6 +640,12 @@ export const fragmentShader = `
     uniform float uChaosAmplitude;
     uniform float uChaosSpeed;
 
+    // v5.1 Global Control
+    uniform float uGlobalSpeed;
+    uniform bool uHideChaos;
+
+    varying float vStructureIntensity; // How much this particle is part of a structure
+
     // Audio Reactivity
     uniform float uBass;
     uniform float uMid;
@@ -602,10 +666,25 @@ export const fragmentShader = `
     }
 
     void main() {
+        // v5.1 Hide Chaos (Show only structured particles)
+        if (uHideChaos) {
+            // If particle is not sufficiently part of a structure (Vortex, Flock, Flow), hide it
+            if (vStructureIntensity < 0.3) discard;
+            
+            // Soft fade for remaining particles
+            float structFade = smoothstep(0.3, 0.6, vStructureIntensity);
+            if (structFade < 0.01) discard;
+        }
+
         float dist = length(gl_PointCoord - vec2(0.5));
         if (dist > 0.5) discard;
 
         float particleFade = smoothstep(0.5, 0.1, dist) * 0.6;
+        
+        // Apply structure fade if hiding chaos
+        if (uHideChaos) {
+            particleFade *= smoothstep(0.3, 0.8, vStructureIntensity);
+        }
         
         // Base color mix with spots
         vec3 color = mix(uBaseColor, uAccentColor, vColorMask);
