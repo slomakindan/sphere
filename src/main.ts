@@ -144,6 +144,7 @@ const params = {
     imageColorMix: 0.0,
     // v3.2 Loop
     loopActive: true,
+    staticMode: false,  // Freeze all animations
     loopDuration: 3.0,
     // v3.3 Chaos
     chaosAmplitude: 0.0,
@@ -251,6 +252,7 @@ centerFolder.add(params, 'voidRadius', 0.0, 2.0).name('Радиус дыры').o
 
 const logicFolder = gui.addFolder('▼ 1.1 Поведение (Logic)');
 logicFolder.add(params, 'loopActive').name('Режим Лупа').onChange(v => sphere.setParams({ loopActive: v }));
+logicFolder.add(params, 'staticMode').name('🔒 Заморозить').onChange(v => sphere.setParams({ staticMode: v }));
 // logicFolder.add(params, 'loopDuration', 1.0, 60.0).step(0.1).name('Длительность').onChange(v => sphere.setParams({ loopDuration: v })); // Moved to Export
 
 const chaosFolder = gui.addFolder('▼ 1.2 Хаос (Life)');

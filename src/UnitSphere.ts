@@ -21,6 +21,7 @@ export class UnitSphere {
             fragmentShader,
             uniforms: {
                 uTime: { value: 0 },
+                uStaticMode: { value: false },
                 uSpeed: { value: 0.2 },
                 uNoiseDensity: { value: 1.5 },
                 uNoiseStrength: { value: 0.3 },
@@ -215,6 +216,7 @@ export class UnitSphere {
         if (params.octaves !== undefined) u.uOctaves.value = params.octaves;
         if (params.radialBias !== undefined) u.uRadialBias.value = params.radialBias;
         if (params.audioStrength !== undefined) u.uAudioInfluence.value = params.audioStrength;
+        if (params.staticMode !== undefined) u.uStaticMode.value = params.staticMode;
 
         // Galaxy Swirl Mode (v2.5)
         if (params.swirlEnabled !== undefined) u.uSwirlEnabled.value = params.swirlEnabled;

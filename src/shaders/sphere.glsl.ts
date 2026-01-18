@@ -1,5 +1,6 @@
 export const vertexShader = `
     uniform float uTime;
+    uniform bool uStaticMode;
     uniform float uSpeed;
     uniform float uNoiseDensity;
     uniform float uNoiseStrength;
@@ -245,6 +246,9 @@ export const vertexShader = `
     void main() {
         vNormal = normal;
         vec3 pos = position;
+        
+        // Static Mode: freeze all time-based animations
+        float effectiveTime = uStaticMode ? 0.0 : uTime;
 
         // v3.0 Shape Morphing
         if (uMorphProgress > 0.0) {
@@ -281,11 +285,11 @@ export const vertexShader = `
             // Calculate time for flow (circular if looping)
             float flowTime;
             if (uLoopActive) {
-                float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
                 float loopRadius = uLoopDuration * uFlowSpeed * 0.5;
                 flowTime = cos(angle) * loopRadius; // Circular motion for seamless loop
             } else {
-                flowTime = uTime * uFlowSpeed;
+                flowTime = effectiveTime * uFlowSpeed;
             }
             
             // Get flow velocity from curl noise
@@ -331,7 +335,7 @@ export const vertexShader = `
                 float angle = (mod(uTime, uLoopDuration) / uLoopDuration) * 6.2831853;
                 vortexTime = angle;
             } else {
-                vortexTime = uTime * uVortexSpeed;
+                vortexTime = effectiveTime * uVortexSpeed;
             }
             
             // Alternating direction for adjacent bands
@@ -359,7 +363,7 @@ export const vertexShader = `
             // 2. Chaotic Rotation
             float dist = length(pos);
             if (uOrbitChaos > 0.0) {
-                 float chaosAngle = uTime * uOrbitChaos * 0.5 + dist * uTwistAmount;
+                 float chaosAngle = effectiveTime * uOrbitChaos * 0.5 + dist * uTwistAmount;
                  vec3 randomAxis = normalize(vec3(
                      snoise(pos + vec3(0.0)),
                      snoise(pos + vec3(100.0)),
@@ -367,7 +371,7 @@ export const vertexShader = `
                  ));
                  pos = rotateAxis(pos, randomAxis, chaosAngle);
             } else {
-                 float angle = uTime * uSwirlSpeed + dist * uTwistAmount;
+                 float angle = effectiveTime * uSwirlSpeed + dist * uTwistAmount;
                  pos = rotateY(pos, angle);
             }
 
@@ -381,11 +385,11 @@ export const vertexShader = `
             }
             
 
-            density = fbm(pos + vec3(uTime * 0.2), uSwirlDetail, 2.0);
+            density = fbm(pos + vec3(effectiveTime * 0.2), uSwirlDetail, 2.0);
             vDensity = max(0.0, density) * uClusterIntensity;
-            noise = fbm(pos * uNoiseDensity + vec3(uTime * uSpeed), uOctaves, uNoiseScale);
+            noise = fbm(pos * uNoiseDensity + vec3(effectiveTime * uSpeed), uOctaves, uNoiseScale);
         } else {
-            float dynamicTime = uTime * (uSpeed + uBass * 0.4 * uAudioInfluence) + 0.123;
+            float dynamicTime = effectiveTime * (uSpeed + uBass * 0.4 * uAudioInfluence) + 0.123;
             vec3 noisePos = normal * uNoiseDensity + vec3(dynamicTime);
 
             // v3.2 Seamless Loop Mode
@@ -447,7 +451,7 @@ export const vertexShader = `
             vec3 loopOffset = vec3(cos(angle), sin(angle), 0.0) * radius;
             spotPos = normal * uSpotScale + loopOffset;
         } else {
-            spotPos = normal * uSpotScale + vec3(uTime * 0.1);
+            spotPos = normal * uSpotScale + vec3(effectiveTime * 0.1);
         }
 
         float mask = snoise(spotPos);
