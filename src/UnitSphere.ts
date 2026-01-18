@@ -164,11 +164,20 @@ export class UnitSphere {
             const duration = this.material.uniforms.uLoopDuration.value;
             const progress = (time % duration) / duration;
 
-            // Loop Mode
-            // Instead of full 360 spin, we "breathe" (oscillate) to return to start
-            this.group.rotation.y = Math.sin(progress * Math.PI * 2.0) * 0.3;
-            this.stripsGroup.rotation.z = Math.sin(progress * Math.PI * 2.0) * 0.1;
-            this.group.position.y = Math.sin(progress * Math.PI * 2.0) * 0.05;
+            // Loop Mode - breathing/oscillation
+            // When staticMode is on, don't oscillate position or rotation
+            const isStatic = this.material.uniforms.uStaticMode?.value;
+
+            if (!isStatic) {
+                this.group.rotation.y = Math.sin(progress * Math.PI * 2.0) * 0.3;
+                this.stripsGroup.rotation.z = Math.sin(progress * Math.PI * 2.0) * 0.1;
+                this.group.position.y = Math.sin(progress * Math.PI * 2.0) * 0.05;
+            } else {
+                // Lock position when Фикс.Центр is on
+                this.group.rotation.y = 0;
+                this.stripsGroup.rotation.z = 0;
+                this.group.position.y = 0;
+            }
         } else {
             // Standard Mode (Chaos is now handled in Shader)
             this.group.rotation.y = time * 0.12;
