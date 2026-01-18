@@ -37,6 +37,11 @@ export class UnitSphere {
                 // v2.3 Color Spot Engine
                 uBaseColor: { value: new THREE.Color(0xf2f4f7) },
                 uAccentColor: { value: new THREE.Color(0xff0000) },
+                // v5.0 Audio-Reactive Colors
+                uBassColor: { value: new THREE.Color(0xff3300) },    // Deep red/orange for bass
+                uMidColor: { value: new THREE.Color(0x00ff88) },     // Cyan/green for voice
+                uTrebleColor: { value: new THREE.Color(0x00aaff) },  // Bright blue for treble
+                uAudioColorMix: { value: 0.7 },
                 uSpotScale: { value: 2.0 },
                 uSpotThreshold: { value: 0.6 },
                 uAudioInfluence: { value: 1.0 },
@@ -238,6 +243,12 @@ export class UnitSphere {
         if (params.octaves !== undefined) u.uOctaves.value = params.octaves;
         if (params.radialBias !== undefined) u.uRadialBias.value = params.radialBias;
         if (params.audioStrength !== undefined) u.uAudioInfluence.value = params.audioStrength;
+
+        // v5.0 Audio Colors
+        if (params.bassColor !== undefined) u.uBassColor.value.set(params.bassColor);
+        if (params.midColor !== undefined) u.uMidColor.value.set(params.midColor);
+        if (params.trebleColor !== undefined) u.uTrebleColor.value.set(params.trebleColor);
+        if (params.audioColorMix !== undefined) u.uAudioColorMix.value = params.audioColorMix;
         if (params.staticMode !== undefined) u.uStaticMode.value = params.staticMode;
 
         // Galaxy Swirl Mode (v2.5)

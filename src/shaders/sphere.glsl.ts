@@ -586,6 +586,12 @@ export const fragmentShader = `
     uniform float uBass;
     uniform float uMid;
     uniform float uTreble;
+    
+    // v5.0 Audio-Reactive Colors
+    uniform vec3 uBassColor;      // Color triggered by bass frequencies
+    uniform vec3 uMidColor;       // Color triggered by mid frequencies (voice)
+    uniform vec3 uTrebleColor;    // Color triggered by treble frequencies
+    uniform float uAudioColorMix; // How much audio affects color (0-1)
 
     // Hue Shift Helper
     vec3 shiftHue(vec3 color, float shift) {
@@ -600,19 +606,8 @@ export const fragmentShader = `
 
         float particleFade = smoothstep(0.5, 0.1, dist) * 0.6;
         
-        // Audio Reactive Accent
-        vec3 activeAccent = uAccentColor;
-        
-        // 1. Bass boosts intensity
-        activeAccent += uBass * 0.5;
-        
-        // 2. Treble shifts hue (Shimmer)
-        if (uTreble > 0.01) {
-            activeAccent = shiftHue(activeAccent, uTreble * 1.5);
-        }
-
-        // Color Spot Engine Mixing
-        vec3 color = mix(uBaseColor, activeAccent, vColorMask);
+        // Base color mix with spots
+        vec3 color = mix(uBaseColor, uAccentColor, vColorMask);
         
         // v3.0 Visual DNA Color Mapping
         if (uImageEnabled && uImageColorMix > 0.0) {
@@ -620,23 +615,50 @@ export const fragmentShader = `
             color = mix(color, texColor.rgb, uImageColorMix);
         }
         
+        // v5.0 Audio-Reactive Color Mix
+        if (uAudioColorMix > 0.0) {
+            // Calculate audio color contribution
+            vec3 audioColor = vec3(0.0);
+            float totalAudio = 0.0;
+            
+            // Bass adds deep color (beats, drums)
+            if (uBass > 0.05) {
+                audioColor += uBassColor * uBass * 2.0;
+                totalAudio += uBass;
+            }
+            
+            // Mid adds voice color (vocals, instruments)
+            if (uMid > 0.05) {
+                audioColor += uMidColor * uMid * 2.5;
+                totalAudio += uMid;
+            }
+            
+            // Treble adds shimmer color (hi-hats, brightness)
+            if (uTreble > 0.05) {
+                audioColor += uTrebleColor * uTreble * 2.0;
+                totalAudio += uTreble;
+            }
+            
+            // Normalize and mix
+            if (totalAudio > 0.1) {
+                audioColor = audioColor / (totalAudio + 0.5);
+                color = mix(color, audioColor, uAudioColorMix * smoothstep(0.0, 0.3, totalAudio));
+            }
+            
+            // Add vortex glow on mid (voice) frequencies
+            float voiceGlow = smoothstep(0.1, 0.5, uMid) * vDensity * 2.0;
+            color += uMidColor * voiceGlow * uAudioColorMix;
+        }
+        
         // Add brightness at noise peaks
         color += vNoise * 0.1;
 
-        // v3.3 Chaos Color Injection - DISABLED by user request
-        /*
-        if (uChaosAmplitude > 0.0) {
-            // Chaotic Hue Shift based on noise and time
-             float chaosShift = sin(vNoise * 5.0 + uTime * uChaosSpeed) * uChaosAmplitude;
-             color = shiftHue(color, chaosShift);
-             
-             // Chaotic Brightness
-             color += vec3(sin(vNoise * 10.0 + uTime * uChaosSpeed * 2.0)) * uChaosAmplitude * 0.2;
-        }
-        */
-
-        // Galaxy Swirl HDR Glow
-        color += vDensity * uAccentColor;
+        // Galaxy Swirl HDR Glow (density-based)
+        color += vDensity * uAccentColor * 0.5;
+        
+        // Final brightness boost on loud sounds
+        float audioBoost = (uBass + uMid + uTreble) * 0.15 * uAudioColorMix;
+        color += audioBoost;
         
         gl_FragColor = vec4(color, uOpacity * particleFade);
     }

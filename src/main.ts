@@ -142,6 +142,11 @@ const params = {
     imageMorphFactor: 0.0,
     imageDisplacementFactor: 0.0,
     imageColorMix: 0.0,
+    // v5.0 Audio Colors
+    bassColor: '#ff3300',
+    midColor: '#00ff88',
+    trebleColor: '#00aaff',
+    audioColorMix: 0.7,
     // v3.2 Loop
     loopActive: true,
     staticMode: false,  // Freeze all animations
@@ -512,7 +517,15 @@ noiseFolder.add(params, 'density', 0.1, 10.0).name('Сложность').onChang
 noiseFolder.add(params, 'radialBias', -1.0, 1.0).name('Радиальное смещ.').onChange(v => sphere.setParams({ radialBias: v }));
 
 const audioFolder = gui.addFolder('▼ 4. Аудио');
-audioFolder.add(params, 'audioStrength', 0, 5.0).name('Влияние').onChange(v => sphere.setParams({ audioStrength: v }));
+audioFolder.add(params, 'audioStrength', 0.0, 5.0).name('Сила Реакции').onChange(v => sphere.setParams({ audioStrength: v }));
+
+// v5.0 Audio Colors
+const audioColorFolder = gui.addFolder('▼ 4.1 Аудио Цвета (Audio Colors)');
+audioColorFolder.addColor(params, 'bassColor').name('Бас (Низкие)').onChange(v => sphere.setParams({ bassColor: new THREE.Color(v) }));
+audioColorFolder.addColor(params, 'midColor').name('Голос (Средние)').onChange(v => sphere.setParams({ midColor: new THREE.Color(v) }));
+audioColorFolder.addColor(params, 'trebleColor').name('Верха (Высокие)').onChange(v => sphere.setParams({ trebleColor: new THREE.Color(v) }));
+audioColorFolder.add(params, 'audioColorMix', 0.0, 1.0).name('Сила Цвета').onChange(v => sphere.setParams({ audioColorMix: v }));
+
 audioFolder.add(params, 'radialBias', -1.0, 1.0).name('Направление (←→)').onChange(v => sphere.setParams({ radialBias: v }));
 audioFolder.add(params, 'smoothing', 0, 0.99).name('Сглаживание').onChange(v => audioController.smoothing = v);
 audioFolder.add(params, 'sensitivity', 0.1, 5.0).name('Чувствительность').onChange(v => audioController.sensitivity = v);
