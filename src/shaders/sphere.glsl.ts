@@ -461,30 +461,28 @@ export const vertexShader = `
         // Calculate UV for Visual DNA
         vUV = vec2(0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159), 0.5 - asin(normal.y) / 3.14159);
 
-        float expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
-        float displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
+        // When staticMode (Фикс.Центр) is on, keep sphere perfectly round - no breathing/expansion
+        float expansion = 1.0;
+        float displacement = 0.0;
+        
+        if (!uStaticMode) {
+            expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
+            displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
 
-        // v3.0 Visual DNA Displacement
-        if (uImageEnabled && uImageDisplacementFactor > 0.0) {
-            float u = 0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159);
-            float v = 0.5 - asin(normal.y) / 3.14159;
-            vec4 texColor = texture2D(uImageTexture, vec2(u, v));
-            float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
-            displacement += luminance * uImageDisplacementFactor;
+            // v3.0 Visual DNA Displacement
+            if (uImageEnabled && uImageDisplacementFactor > 0.0) {
+                float u = 0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159);
+                float v = 0.5 - asin(normal.y) / 3.14159;
+                vec4 texColor = texture2D(uImageTexture, vec2(u, v));
+                float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
+                displacement += luminance * uImageDisplacementFactor;
+            }
         }
         
         vec3 finalPosition = pos * expansion + normal * displacement;
         
         // v4.1 Sphere Scale - scale particles towards/away from center
         finalPosition *= uSphereScale;
-        
-        // v4.4 Center Lock - keep center stable, prevent overall drift
-        if (uStaticMode) {
-            // Project onto XZ plane to lock center Y-drift
-            // This keeps particle animations but prevents the whole sphere from drifting
-            float avgY = finalPosition.y * 0.1; // Subtle centering force
-            finalPosition.y -= avgY;
-        }
         
         // v4.3 Containment - keep particles within radius
         if (uContainmentStrength > 0.0) {
