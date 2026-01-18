@@ -81,6 +81,11 @@ export const vertexShader = `
     uniform float uContainmentRadius;  // Max radius before particles are pulled back
     uniform float uContainmentStrength;  // How strong the pull is
 
+    // v4.5 Flocking (Bird-like streaming)
+    uniform float uFlockingStrength;    // How much particles cluster into streams
+    uniform float uFlockingScale;       // Size of the flocking clusters
+    uniform float uFlockingSpeed;       // Animation speed of streams
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -444,6 +449,24 @@ export const vertexShader = `
                 float pullStrength = smoothstep(0.0, 1.0, excess * 0.5) * uContainmentStrength;
                 pos = normalize(pos) * mix(dist, uContainmentRadius, pullStrength);
             }
+        }
+        
+        // v4.5 Flocking - cluster particles into streams like birds
+        if (uFlockingStrength > 0.0) {
+            // Create a "flock grid" based on noise - particles snap toward flock centers
+            float flockTime = uTime * uFlockingSpeed;
+            vec3 flockSeed = floor(pos * uFlockingScale) / uFlockingScale; // Discretize space
+            
+            // Calculate flock center offset using noise
+            float flockNoise1 = snoise(flockSeed + vec3(flockTime, 0.0, 0.0));
+            float flockNoise2 = snoise(flockSeed + vec3(0.0, flockTime, 100.0));
+            float flockNoise3 = snoise(flockSeed + vec3(200.0, 0.0, flockTime));
+            
+            vec3 flockCenter = flockSeed + vec3(flockNoise1, flockNoise2, flockNoise3) * 0.2;
+            
+            // Pull particles toward their flock center
+            vec3 toFlock = flockCenter - pos;
+            pos += toFlock * uFlockingStrength * 0.5;
         }
         
         // v3.4 Seamless Color Spots

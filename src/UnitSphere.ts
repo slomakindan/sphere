@@ -91,7 +91,11 @@ export class UnitSphere {
                 uVortexTilt: { value: 0.0 },
                 // v4.3 Containment
                 uContainmentRadius: { value: 1.5 },
-                uContainmentStrength: { value: 0.0 }
+                uContainmentStrength: { value: 0.0 },
+                // v4.5 Flocking
+                uFlockingStrength: { value: 0.0 },
+                uFlockingScale: { value: 3.0 },
+                uFlockingSpeed: { value: 0.3 }
             },
             transparent: true,
             depthTest: false,
@@ -267,6 +271,11 @@ export class UnitSphere {
         // v4.3 Containment
         if (params.containmentRadius !== undefined) u.uContainmentRadius.value = params.containmentRadius;
         if (params.containmentStrength !== undefined) u.uContainmentStrength.value = params.containmentStrength;
+
+        // v4.5 Flocking
+        if (params.flockingStrength !== undefined) u.uFlockingStrength.value = params.flockingStrength;
+        if (params.flockingScale !== undefined) u.uFlockingScale.value = params.flockingScale;
+        if (params.flockingSpeed !== undefined) u.uFlockingSpeed.value = params.flockingSpeed;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;

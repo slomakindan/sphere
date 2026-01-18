@@ -170,7 +170,11 @@ const params = {
     vortexTilt: 0.0,
     // v4.3 Containment
     containmentRadius: 1.5,
-    containmentStrength: 0.0
+    containmentStrength: 0.0,
+    // v4.5 Flocking
+    flockingStrength: 0.0,
+    flockingScale: 3.0,
+    flockingSpeed: 0.3
 };
 
 // UI: dat.GUI Setup
@@ -280,6 +284,12 @@ vortexFolder.add(params, 'vortexTilt', 0.0, 1.57).name('Наклон оси').on
 const containFolder = gui.addFolder('▼ 1.5 Удержание (Containment)');
 containFolder.add(params, 'containmentRadius', 0.5, 5.0).name('Радиус').onChange(v => sphere.setParams({ containmentRadius: v }));
 containFolder.add(params, 'containmentStrength', 0.0, 1.0).name('Сила').onChange(v => sphere.setParams({ containmentStrength: v }));
+
+// v4.5 Flocking (Bird-like streams)
+const flockingFolder = gui.addFolder('▼ 1.6 Стаи (Flocking)');
+flockingFolder.add(params, 'flockingStrength', 0.0, 1.0).name('Сила').onChange(v => sphere.setParams({ flockingStrength: v }));
+flockingFolder.add(params, 'flockingScale', 1.0, 10.0).name('Размер стай').onChange(v => sphere.setParams({ flockingScale: v }));
+flockingFolder.add(params, 'flockingSpeed', 0.0, 2.0).name('Скорость').onChange(v => sphere.setParams({ flockingSpeed: v }));
 
 // ... (Other folders remain) ...
 
@@ -398,6 +408,7 @@ const exportActions = {
 
         // Pass audio path (APNG doesn't support audio)
         const audioPath = (format === 'apng') ? null : currentAudioPath;
+        console.log('[Export] audioPath being passed:', audioPath);
         const started = await sceneManager.startProResExport(size, size, fps, format, audioPath, duration, maxSize);
         if (!started) {
             renderOverlay.style.display = 'none';
@@ -788,6 +799,7 @@ audioInput.addEventListener('change', async (e) => {
     if (file) {
         // Capture path for export (Electron specific)
         currentAudioPath = (file as any).path || null;
+        console.log('[Audio] File loaded, currentAudioPath:', currentAudioPath);
 
         statusEl.innerText = 'Scanning frequency...';
         const name = await audioController.loadFile(file);
