@@ -395,11 +395,15 @@ export const vertexShader = `
             // v3.2 Seamless Loop Mode
             if (uLoopActive) {
                 float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
-                // Calculate radius to match perceived speed: Length = Speed * Duration
-                // Circle Circumference (2*PI*R) = Speed * Duration => R = (Speed * Duration) / 2PI
-                // We use a predefined radius multiplier for strong visual movement
                 float radius = uLoopDuration * uSpeed * 0.5; 
-                vec3 loopOffset = vec3(cos(angle), sin(angle), cos(angle) * 0.5 + sin(angle) * 0.5) * radius;
+                
+                // When staticMode (Фикс.Центр) is on, use XZ plane only to prevent Y-drift
+                vec3 loopOffset;
+                if (uStaticMode) {
+                    loopOffset = vec3(cos(angle), 0.0, sin(angle)) * radius; // XZ plane only
+                } else {
+                    loopOffset = vec3(cos(angle), sin(angle), cos(angle) * 0.5 + sin(angle) * 0.5) * radius;
+                }
                 noisePos = normal * uNoiseDensity + loopOffset;
             } else {
                 // Standard Mode with Chaos
@@ -461,22 +465,16 @@ export const vertexShader = `
         // Calculate UV for Visual DNA
         vUV = vec2(0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159), 0.5 - asin(normal.y) / 3.14159);
 
-        // When staticMode (Фикс.Центр) is on, keep sphere perfectly round - no breathing/expansion
-        float expansion = 1.0;
-        float displacement = 0.0;
-        
-        if (!uStaticMode) {
-            expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
-            displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
+        float expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
+        float displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
 
-            // v3.0 Visual DNA Displacement
-            if (uImageEnabled && uImageDisplacementFactor > 0.0) {
-                float u = 0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159);
-                float v = 0.5 - asin(normal.y) / 3.14159;
-                vec4 texColor = texture2D(uImageTexture, vec2(u, v));
-                float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
-                displacement += luminance * uImageDisplacementFactor;
-            }
+        // v3.0 Visual DNA Displacement
+        if (uImageEnabled && uImageDisplacementFactor > 0.0) {
+            float u = 0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159);
+            float v = 0.5 - asin(normal.y) / 3.14159;
+            vec4 texColor = texture2D(uImageTexture, vec2(u, v));
+            float luminance = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
+            displacement += luminance * uImageDisplacementFactor;
         }
         
         vec3 finalPosition = pos * expansion + normal * displacement;
