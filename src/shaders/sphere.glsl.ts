@@ -247,8 +247,8 @@ export const vertexShader = `
         vNormal = normal;
         vec3 pos = position;
         
-        // When Фикс.Центр is on, freeze all time-based animations completely
-        float effectiveTime = uStaticMode ? 0.0 : uTime;
+        // effectiveTime - always use real time (staticMode only locks JS group position, not shader animations)
+        float effectiveTime = uTime;
 
         // v3.0 Shape Morphing
         if (uMorphProgress > 0.0) {
@@ -465,17 +465,11 @@ export const vertexShader = `
         // Calculate UV for Visual DNA
         vUV = vec2(0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159), 0.5 - asin(normal.y) / 3.14159);
 
-        // When Фикс.Центр is on, disable time-based expansion/displacement completely
-        float expansion = 1.0;
-        float displacement = 0.0;
-        
-        if (!uStaticMode) {
-            expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
-            displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
-        }
+        float expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
+        float displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
 
-        // v3.0 Visual DNA Displacement (also disabled in staticMode)
-        if (!uStaticMode && uImageEnabled && uImageDisplacementFactor > 0.0) {
+        // v3.0 Visual DNA Displacement
+        if (uImageEnabled && uImageDisplacementFactor > 0.0) {
             float u = 0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159);
             float v = 0.5 - asin(normal.y) / 3.14159;
             vec4 texColor = texture2D(uImageTexture, vec2(u, v));
