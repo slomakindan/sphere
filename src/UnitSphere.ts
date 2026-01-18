@@ -254,7 +254,6 @@ export class UnitSphere {
         if (params.trebleColor !== undefined) u.uTrebleColor.value.set(params.trebleColor);
         if (params.audioColorMix !== undefined) u.uAudioColorMix.value = params.audioColorMix;
         if (params.audioColorsEnabled !== undefined) u.uAudioColorsEnabled.value = params.audioColorsEnabled;
-        if (params.audioColorsEnabled !== undefined) u.uAudioColorsEnabled.value = params.audioColorsEnabled;
         if (params.staticMode !== undefined) u.uStaticMode.value = params.staticMode;
 
         // v5.1 Global Control

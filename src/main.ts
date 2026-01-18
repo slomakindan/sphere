@@ -886,11 +886,18 @@ presetInput.addEventListener('change', async (e) => {
             const preset = JSON.parse(text);
             Object.assign(params, preset);
             sphere.setParams(params);
-            for (let i in gui.__folders) {
-                for (let j in gui.__folders[i].__controllers) {
-                    gui.__folders[i].__controllers[j].updateDisplay();
+
+            // Recursively update all GUI controllers
+            const updateControllers = (folder: any) => {
+                if (folder.__controllers) {
+                    for (let c of folder.__controllers) c.updateDisplay();
                 }
-            }
+                if (folder.__folders) {
+                    for (let f in folder.__folders) updateControllers(folder.__folders[f]);
+                }
+            };
+            updateControllers(gui);
+
             statusEl.innerText = 'Code Loaded';
         } catch (err) {
             console.error('Failed to load preset', err);
@@ -910,12 +917,17 @@ window.addEventListener('drop', async (e) => {
             Object.assign(params, preset);
             sphere.setParams(params);
 
-            // Sync dat.GUI
-            for (let i in gui.__folders) {
-                for (let j in gui.__folders[i].__controllers) {
-                    gui.__folders[i].__controllers[j].updateDisplay();
+            // Recursively update all GUI controllers
+            const updateControllers = (folder: any) => {
+                if (folder.__controllers) {
+                    for (let c of folder.__controllers) c.updateDisplay();
                 }
-            }
+                if (folder.__folders) {
+                    for (let f in folder.__folders) updateControllers(folder.__folders[f]);
+                }
+            };
+            updateControllers(gui);
+
             statusEl.innerText = 'Preset Applied';
         } catch (err) {
             console.error('Failed to load preset', err);
