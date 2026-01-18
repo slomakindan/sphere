@@ -656,11 +656,14 @@ export const fragmentShader = `
         // Galaxy Swirl HDR Glow (density-based)
         color += vDensity * uAccentColor * 0.5;
         
-        // Final brightness boost on loud sounds
-        float audioBoost = (uBass + uMid + uTreble) * 0.15 * uAudioColorMix;
-        color += audioBoost;
+        // Final brightness boost - apply to OPACITY/GLOW, not white color addiction
+        // This prevents the sphere from turning white
+        float audioGlow = (uBass + uMid + uTreble) * 0.3 * uAudioColorMix;
         
-        gl_FragColor = vec4(color, uOpacity * particleFade);
+        // Instead of adding white, we boost the COLOR intensity
+        color = color * (1.0 + audioGlow * 0.5);
+        
+        gl_FragColor = vec4(color, uOpacity * particleFade * (1.0 + audioGlow * 0.2));
     }
 `;
 
