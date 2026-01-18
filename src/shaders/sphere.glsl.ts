@@ -247,8 +247,8 @@ export const vertexShader = `
         vNormal = normal;
         vec3 pos = position;
         
-        // effectiveTime - always use uTime (staticMode now controls center lock, not animation freeze)
-        float effectiveTime = uTime;
+        // When Фикс.Центр is on, freeze all time-based animations completely
+        float effectiveTime = uStaticMode ? 0.0 : uTime;
 
         // v3.0 Shape Morphing
         if (uMorphProgress > 0.0) {
