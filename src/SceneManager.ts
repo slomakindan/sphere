@@ -233,24 +233,25 @@ export class SceneManager {
     }
 
     public animate(audio: { level: number, bass: number, mid: number, treble: number }) {
+        // During motion frame export, skip ALL updates to prevent interference
+        if (this.isRenderingMotion) return;
+
         if (this.isCapturingProRes && this.isBusyExporting) return;
 
         if (this.isCapturingProRes) {
             this.currentTime += this.timeStep;
-        } else if (!this.isRenderingMotion) {
+        } else {
             this.clock.getDelta();
             this.currentTime = this.clock.getElapsedTime();
         }
 
-        if (!this.isRenderingMotion) {
-            this.sphere.update(this.currentTime, audio);
-            this.controls.update();
+        this.sphere.update(this.currentTime, audio);
+        this.controls.update();
 
-            if (this.isCapturingProRes) {
-                this.renderForExport();
-            } else {
-                this.composer.render();
-            }
+        if (this.isCapturingProRes) {
+            this.renderForExport();
+        } else {
+            this.composer.render();
         }
     }
 
