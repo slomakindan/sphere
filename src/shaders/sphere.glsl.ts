@@ -463,6 +463,7 @@ export const vertexShader = `
             // v3.2 Seamless Loop Mode & Chaos
             float baseTime;
             vec3 noiseOffset;
+            vec3 noisePos;
             
             if (uLoopActive) {
                 float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
