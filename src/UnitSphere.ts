@@ -243,8 +243,13 @@ export class UnitSphere {
         if (params.speed !== undefined) u.uSpeed.value = params.speed;
         if (params.density !== undefined) u.uNoiseDensity.value = params.density;
         if (params.strength !== undefined) u.uNoiseStrength.value = params.strength;
-        if (params.scale !== undefined) u.uNoiseScale.value = params.scale;
-        if (params.octaves !== undefined) u.uOctaves.value = params.octaves;
+
+        // Support aliases from main.ts params object
+        const scaleVal = (params.scale !== undefined) ? params.scale : params.noiseScale;
+        if (scaleVal !== undefined) u.uNoiseScale.value = scaleVal;
+
+        const octavesVal = (params.octaves !== undefined) ? params.octaves : params.noiseDetail;
+        if (octavesVal !== undefined) u.uOctaves.value = octavesVal;
         if (params.radialBias !== undefined) u.uRadialBias.value = params.radialBias;
         if (params.audioStrength !== undefined) u.uAudioInfluence.value = params.audioStrength;
 
