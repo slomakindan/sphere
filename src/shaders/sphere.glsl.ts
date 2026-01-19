@@ -395,13 +395,16 @@ export const vertexShader = `
             // Calculate rotation angle based on band
             float vortexTime;
             if (uLoopActive) {
-                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+                // For seamless looping: multiply by speed INSIDE the mod
+                // uVortexSpeed determines how many complete rotations per loop
+                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853 * uVortexSpeed;
                 vortexTime = angle;
             } else {
                 vortexTime = effectiveTime * uVortexSpeed;
             }
             
             // Alternating direction for adjacent bands
+            // bandStrength already oscillates -1 to 1, so rotation is symmetric
             float rotationAngle = bandStrength * uVortexStrength * vortexTime;
             
             // Apply rotation around Y axis (longitude rotation)
@@ -518,9 +521,11 @@ export const vertexShader = `
         if (uFlockingStrength > 0.0) {
             float flockTime;
             if (uLoopActive) {
-                // Use circular time for seamless looping
-                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
-                flockTime = angle * uFlockingSpeed;
+                // For seamless looping: use angle directly
+                // uFlockingSpeed determines how many complete cycles happen per loop
+                // If speed=1, one full cycle per loop. If speed=2, two cycles, etc.
+                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853 * uFlockingSpeed;
+                flockTime = angle;
             } else {
                 flockTime = effectiveTime * uFlockingSpeed;
             }
@@ -530,13 +535,17 @@ export const vertexShader = `
             vec3 streamPos = pos * uFlockingScale;
             
             // Create a sinusoidal pattern based on position to form "lanes"
+            // Using sin() ensures values wrap around smoothly
             float lane1 = sin(streamPos.x * 3.14159 + flockTime) * sin(streamPos.y * 2.0);
             float lane2 = sin(streamPos.y * 3.14159 + flockTime * 0.7) * sin(streamPos.z * 2.0);
             float lane3 = sin(streamPos.z * 3.14159 + flockTime * 1.3) * sin(streamPos.x * 2.0);
             
             // Create smooth stream displacement (tangential, not radial)
             vec3 streamDir = normalize(cross(normal, vec3(lane1, lane2, lane3)));
-            float streamIntensity = (sin(snoise(streamPos + flockTime) * 6.28) + 1.0) * 0.5;
+            
+            // For noise-based intensity, use circular offset
+            float noiseOffset = sin(flockTime) * 0.5 + cos(flockTime * 0.7) * 0.5;
+            float streamIntensity = (sin(snoise(streamPos + noiseOffset) * 6.28) + 1.0) * 0.5;
             
             // Track structure intensity for Hide Chaos feature
             vStructureIntensity = max(vStructureIntensity, streamIntensity);
