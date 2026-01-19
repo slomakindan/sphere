@@ -519,10 +519,10 @@ matFolder.add(params, 'opacity', 0, 1.0).name('Прозрачность').onChan
 matFolder.open();
 
 const noiseFolder = gui.addFolder('▼ 3. Шум');
-noiseFolder.add(params, 'noiseScale', 0.1, 10.0).name('Масштаб').onChange(v => sphere.setParams({ scale: v }));
-noiseFolder.add(params, 'noiseDetail', 1, 8).step(1).name('Детализация').onChange(v => sphere.setParams({ octaves: v }));
+noiseFolder.add(params, 'noiseScale', 0.1, 10.0).name('Масштаб').onChange(v => { params.scale = v; sphere.setParams({ scale: v }); });
+noiseFolder.add(params, 'noiseDetail', 1, 8).step(1).name('Детализация').onChange(v => { params.octaves = v; sphere.setParams({ octaves: v }); });
 noiseFolder.add(params, 'strength', 0, 2.0).name('Сила').onChange(v => sphere.setParams({ strength: v }));
-noiseFolder.add(params, 'evolutionSpeed', 0, 2.0).name('Скорость').onChange(v => sphere.setParams({ speed: v }));
+noiseFolder.add(params, 'evolutionSpeed', 0, 2.0).name('Скорость').onChange(v => { params.speed = v; sphere.setParams({ speed: v }); });
 noiseFolder.add(params, 'density', 0.1, 10.0).name('Сложность').onChange(v => sphere.setParams({ density: v }));
 noiseFolder.add(params, 'radialBias', -1.0, 1.0).name('Радиальное смещ.').onChange(v => sphere.setParams({ radialBias: v }));
 
