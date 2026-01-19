@@ -460,43 +460,53 @@ export const vertexShader = `
             vDensity = max(0.0, density) * uClusterIntensity;
             noise = fbm(pos * uNoiseDensity + vec3(effectiveTime * uSpeed), uOctaves, uNoiseScale);
         } else {
-            float dynamicTime = effectiveTime * (uSpeed + uBass * 0.4 * uAudioInfluence) + 0.123;
-            vec3 noisePos = normal * uNoiseDensity + vec3(dynamicTime);
-
-            // v3.2 Seamless Loop Mode
+            // v3.2 Seamless Loop Mode & Chaos
+            float baseTime;
+            vec3 noiseOffset;
+            
             if (uLoopActive) {
                 float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
                 float radius = uLoopDuration * uSpeed * 0.5; 
                 
-                // When staticMode (Фикс.Центр) is on, use XZ plane only to prevent Y-drift
-                vec3 loopOffset;
+                // When staticMode (Фикс.Центр) is on, use XZ plane only
                 if (uStaticMode) {
-                    loopOffset = vec3(cos(angle), 0.0, sin(angle)) * radius; // XZ plane only
+                    noiseOffset = vec3(cos(angle), 0.0, sin(angle)) * radius; 
                 } else {
-                    loopOffset = vec3(cos(angle), sin(angle), cos(angle) * 0.5 + sin(angle) * 0.5) * radius;
+                    noiseOffset = vec3(cos(angle), sin(angle), cos(angle) * 0.5 + sin(angle) * 0.5) * radius;
                 }
-                noisePos = normal * uNoiseDensity + loopOffset;
+                baseTime = angle; // Use angle as time base for chaos to ensure seamless loop
             } else {
-                // Standard Mode with Chaos
-                float chaosTime = dynamicTime;
-                
-                // Chaos Injection
-                if (uChaosAmplitude > 0.0) {
-                    // Warp time non-linearly
-                    chaosTime += sin(dynamicTime * uChaosSpeed * 2.0) * uChaosAmplitude * 0.5;
-                    
-                    // Warp spatial coordinates (Domain Warping)
-                    vec3 warp = vec3(
-                        sin(normal.z * 4.0 + dynamicTime * uChaosSpeed),
-                        cos(normal.x * 4.0 + dynamicTime * uChaosSpeed),
-                        sin(normal.y * 4.0 + dynamicTime * uChaosSpeed)
-                    ) * uChaosAmplitude * 0.2;
-                    
-                    noisePos += warp;
-                }
-                
-                noisePos.z += chaosTime; 
+                float dynamicTime = effectiveTime * (uSpeed + uBass * 0.4 * uAudioInfluence) + 0.123;
+                noiseOffset = vec3(dynamicTime);
+                baseTime = dynamicTime;
             }
+            
+            noisePos = normal * uNoiseDensity + noiseOffset;
+            
+            // Chaos Injection (Now works in Loop Mode too!)
+            if (uChaosAmplitude > 0.0) {
+                // Use baseTime which is either circular (Loop) or linear (Standard)
+                // For Loop Mode, multiply by speed/integer to keep it seamless over 2PI
+                float chaosT = baseTime * uChaosSpeed; 
+                
+                // Warp time non-linearly
+                float timeWarp = sin(chaosT * 2.0) * uChaosAmplitude * 0.5;
+                
+                // Warp spatial coordinates (Domain Warping)
+                vec3 warp = vec3(
+                    sin(normal.z * 4.0 + chaosT),
+                    cos(normal.x * 4.0 + chaosT),
+                    sin(normal.y * 4.0 + chaosT)
+                ) * uChaosAmplitude * 0.2;
+                
+                noisePos += warp;
+                
+                // In non-loop mode we add time to Z. In loop mode, noiseOffset handles movement.
+                // But we can add the timeWarp to affect the texture evolution
+                if (!uLoopActive) noisePos.z += timeWarp;
+            }
+            
+            if (!uLoopActive) noisePos.z += baseTime; // Add base linear movement for standard mode
 
             noise = fbm(noisePos, uOctaves, uNoiseScale);
             vDensity = 0.0;
