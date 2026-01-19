@@ -346,7 +346,7 @@ export class SceneManager {
         const originalBloomStrength = this.bloomPass.strength;
 
         this.bloomPass.radius *= scaleFactor;
-        this.bloomPass.strength *= 0.85;
+        // this.bloomPass.strength *= 1.0;
 
         // Force last pass to render to screen so we can read pixels
         const lastPass = this.composer.passes[this.composer.passes.length - 1];
