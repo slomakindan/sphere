@@ -280,7 +280,8 @@ export class SceneManager {
             const originalBloomStrength = this.bloomPass.strength;
 
             this.bloomPass.radius *= scaleFactor;
-            this.bloomPass.strength *= 0.85; // Slight reduction for 4K density
+            this.bloomPass.radius *= scaleFactor;
+            // this.bloomPass.strength *= 1.0; // Don't reduce strength for export
 
 
             // Force last pass to render to screen so we can read pixels
