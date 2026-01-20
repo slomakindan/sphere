@@ -400,19 +400,18 @@ export const vertexShader = `
             float bandStrength = sin(bandPhase);
             
             // Calculate rotation angle based on band
-            float vortexTime;
+            float vortexAngle;
             if (uLoopActive) {
-                // For seamless looping: multiply by speed INSIDE the mod
-                // uVortexSpeed determines how many complete rotations per loop
-                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853 * uVortexSpeed;
-                vortexTime = angle;
+                // SEAMLESS LOOP: angle always goes 0 to 2*PI
+                // Speed controls ROTATION INTENSITY, not the loop angle
+                vortexAngle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
             } else {
-                vortexTime = effectiveTime * uVortexSpeed;
+                vortexAngle = effectiveTime * 0.5;
             }
             
             // Alternating direction for adjacent bands
-            // bandStrength already oscillates -1 to 1, so rotation is symmetric
-            float rotationAngle = bandStrength * uVortexStrength * vortexTime;
+            // Speed controls how much rotation happens during the loop
+            float rotationAngle = bandStrength * uVortexStrength * sin(vortexAngle) * uVortexSpeed;
             
             // Apply rotation around Y axis (longitude rotation)
             float cosR = cos(rotationAngle);

@@ -530,11 +530,134 @@ const exportActions = {
             return;
         }
         renderMotionBtn.click();
+    },
+    exportFullTrack: async () => {
+        // Get audio duration
+        const audioDuration = audioController.getDuration();
+        if (audioDuration <= 0) {
+            alert('Сначала загрузите аудио файл!');
+            return;
+        }
+
+        const fps = parseInt(params.exportFps.toString());
+        const loopDuration = params.loopDuration;
+        const totalFrames = Math.ceil(audioDuration * fps);
+
+        if (totalFrames <= 0) return;
+
+        console.log(`[EXPORT FULL TRACK] Audio: ${audioDuration.toFixed(2)}s, Loop: ${loopDuration}s, Frames: ${totalFrames}`);
+
+        setAppState('RENDERING');
+        isRenderingCancelled = false;
+        stopRenderBtn.disabled = false;
+        statusEl.innerText = `Рендер трека ${audioDuration.toFixed(1)}с (луп ${loopDuration}с) @ ${fps}fps...`;
+        renderOverlay.style.display = 'flex';
+        totalFramesEl.innerText = totalFrames.toString();
+
+        // Resolution Logic
+        let size = 1080;
+        switch (params.exportResolution) {
+            case '4K': size = 4096; break;
+            case '2K': size = 2048; break;
+            case '1080p': size = 1080; break;
+            case '720p': size = 720; break;
+            case '512': size = 512; break;
+            case '256': size = 256; break;
+            case '100': size = 100; break;
+        }
+
+        const format = params.exportFormat as 'mov' | 'webm' | 'apng';
+
+        // Clone params with loop active
+        const baseParams = JSON.parse(JSON.stringify(params));
+        baseParams.loopActive = true;
+        baseParams.loopDuration = loopDuration;
+
+        const cameraState = {
+            position: { x: sceneManager.camera.position.x, y: sceneManager.camera.position.y, z: sceneManager.camera.position.z },
+            target: { x: sceneManager.controls.target.x, y: sceneManager.controls.target.y, z: sceneManager.controls.target.z }
+        };
+
+        // Start FFmpeg/video encoder with AUDIO
+        const audioPath = currentAudioPath;
+        console.log('[EXPORT FULL TRACK] Audio path:', audioPath);
+        const started = await sceneManager.startProResExport(size, size, fps, format, audioPath, audioDuration);
+
+        if (!started) {
+            console.error('[EXPORT FULL TRACK] Failed to start export');
+            renderOverlay.style.display = 'none';
+            setAppState('IDLE');
+            return;
+        }
+
+        const startTime = performance.now();
+
+        // Pre-analyze audio for offline rendering
+        const audioBuffer = audioController.getBuffer();
+
+        for (let i = 0; i < totalFrames; i++) {
+            if (isRenderingCancelled) {
+                sceneManager.stopProResExport();
+                break;
+            }
+
+            const t = i / fps; // Actual time in audio
+
+            // Calculate audio levels at this point (simplified - use average if no buffer)
+            let audio = { level: 0, bass: 0, mid: 0, treble: 0 };
+            if (audioBuffer) {
+                // Simple offline audio analysis
+                const sampleRate = audioBuffer.sampleRate;
+                const sampleIndex = Math.floor(t * sampleRate);
+                const windowSize = Math.floor(sampleRate * 0.05); // 50ms window
+                const channelData = audioBuffer.getChannelData(0);
+
+                let rms = 0;
+                for (let j = 0; j < windowSize && (sampleIndex + j) < channelData.length; j++) {
+                    rms += channelData[sampleIndex + j] ** 2;
+                }
+                rms = Math.sqrt(rms / windowSize);
+
+                // Simplified frequency bands (approximate)
+                audio = {
+                    level: Math.min(rms * 3, 1),
+                    bass: Math.min(rms * 2.5, 1),
+                    mid: Math.min(rms * 2, 1),
+                    treble: Math.min(rms * 1.5, 1)
+                };
+            }
+
+            const frame = {
+                time: t, // Use actual time - shader will mod it by loopDuration
+                audio: audio,
+                params: baseParams,
+                camera: cameraState
+            };
+
+            const pixels = await sceneManager.renderMotionFrame(frame, size);
+            await sceneManager.sendFrame(pixels);
+
+            // Update UI
+            const progress = ((i + 1) / totalFrames) * 100;
+            progressFill.style.width = `${progress}%`;
+            currentFrameEl.innerText = (i + 1).toString();
+            const elapsed = (performance.now() - startTime) / 1000;
+            const remaining = (elapsed / (i + 1)) * (totalFrames - i - 1);
+            etaEl.innerText = `⏱ ${remaining.toFixed(0)}с`;
+        }
+
+        sceneManager.stopProResExport();
+        statusEl.innerText = `✅ Готово!`;
+
+        renderOverlay.style.display = 'none';
+        stopRenderBtn.disabled = true;
+        setAppState('IDLE');
     }
 };
 
 exportFolder.add(exportActions, 'renderMotion').name('🎬 РЕНДЕР ЗАПИСИ (Motion)');
 exportFolder.add(exportActions, 'exportLoop').name('🔴 РЕНДЕР ЛУПА (Spectacle)');
+exportFolder.add(exportActions, 'exportFullTrack').name('🎵 РЕНДЕР ТРЕКА (Full Audio)');
 
 
 
