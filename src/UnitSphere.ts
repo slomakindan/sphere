@@ -104,7 +104,9 @@ export class UnitSphere {
                 // v4.5 Flocking
                 uFlockingStrength: { value: 0.0 },
                 uFlockingScale: { value: 3.0 },
-                uFlockingSpeed: { value: 0.3 }
+                uFlockingSpeed: { value: 0.3 },
+                // v5.2 Animation Modes
+                uAnimationMode: { value: 0 }
             },
             transparent: true,
             depthTest: false,
@@ -301,6 +303,9 @@ export class UnitSphere {
         if (params.flockingStrength !== undefined) u.uFlockingStrength.value = params.flockingStrength;
         if (params.flockingScale !== undefined) u.uFlockingScale.value = params.flockingScale;
         if (params.flockingSpeed !== undefined) u.uFlockingSpeed.value = params.flockingSpeed;
+
+        // v5.2 Animation Modes
+        if (params.animationMode !== undefined) u.uAnimationMode.value = params.animationMode;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;

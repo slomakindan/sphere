@@ -183,7 +183,20 @@ const params = {
     flockingSpeed: 0.3,
     // v5.1 Global Settings
     globalSpeed: 1.0,
-    hideChaos: false
+    hideChaos: false,
+    // v5.2 Animation Modes
+    animationMode: 0,
+    animationModeLabel: 'Нет' // For GUI display
+};
+
+// Animation mode options for dropdown
+const animationModes: { [key: string]: number } = {
+    'Нет': 0,
+    'Дыхание (Ambient)': 1,
+    'Пульс (Beats)': 2,
+    'Нагнетание (Dark)': 3,
+    'Хаос (Intense)': 4,
+    'Поток (Melodic)': 5
 };
 
 // UI: dat.GUI Setup
@@ -193,6 +206,12 @@ const gui = new dat.GUI({ width: 350 });
 const globalFolder = gui.addFolder('▼ 0. Глобальные Настройки (Global)');
 globalFolder.add(params, 'globalSpeed', 0.0, 3.0).name('Общая Скорость').onChange(v => sphere.setParams({ globalSpeed: v }));
 globalFolder.add(params, 'hideChaos').name('Только Структуры (Hide Chaos)').onChange(v => sphere.setParams({ hideChaos: v }));
+// v5.2 Animation Mode Dropdown
+globalFolder.add(params, 'animationModeLabel', Object.keys(animationModes)).name('🎵 Режим Анимации').onChange((label: string) => {
+    const mode = animationModes[label];
+    params.animationMode = mode;
+    sphere.setParams({ animationMode: mode });
+});
 
 document.getElementById('gui-container')?.appendChild(gui.domElement);
 

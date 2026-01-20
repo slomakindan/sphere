@@ -90,6 +90,10 @@ export const vertexShader = `
     uniform float uFlockingScale;       // Size of the flocking clusters
     uniform float uFlockingSpeed;       // Animation speed of streams
 
+    // v5.2 Animation Modes (Audio-Reactive Presets)
+    // 0 = None, 1 = Breathing, 2 = Pulse, 3 = Tension, 4 = Chaos, 5 = Flow
+    uniform int uAnimationMode;
+
 
     varying vec3 vNormal;
     varying float vNoise;
@@ -605,8 +609,74 @@ export const vertexShader = `
         // Calculate UV for Visual DNA
         vUV = vec2(0.5 + atan(normal.z, normal.x) / (2.0 * 3.14159), 0.5 - asin(normal.y) / 3.14159);
 
-        float expansion = 1.0 + uBass * uRadialBias * uAudioInfluence;
-        float displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence);
+        // v5.2 Animation Modes - Audio-Reactive Presets
+        float modeExpansion = 1.0;
+        float modeDisplacement = 0.0;
+        vec3 modeOffset = vec3(0.0);
+        
+        if (uAnimationMode == 1) {
+            // BREATHING: Slow, deep pulsing synced to bass
+            // Great for ambient, atmospheric tracks
+            float breathPhase = sin(effectiveTime * 0.5) * 0.5 + 0.5;
+            modeExpansion = 1.0 + uBass * breathPhase * 0.3;
+            modeDisplacement = uBass * breathPhase * 0.1;
+        }
+        else if (uAnimationMode == 2) {
+            // PULSE: Sharp, rhythmic reactions to beats
+            // Great for electronic, percussive music
+            float pulse = pow(uBass, 2.0); // Square for sharper response
+            modeExpansion = 1.0 + pulse * 0.5;
+            modeDisplacement = pulse * 0.2;
+            // Add rhythmic "jumps" on strong beats
+            modeOffset = normal * pulse * 0.1;
+        }
+        else if (uAnimationMode == 3) {
+            // TENSION: Building, oppressive energy (great for dark soundtracks)
+            // Low rumble expands, high frequencies create "nervousness"
+            float tension = uBass * 0.7 + uMid * 0.5;
+            float nervousness = uTreble * sin(effectiveTime * 5.0 + length(pos) * 3.0);
+            modeExpansion = 1.0 + tension * 0.4;
+            modeDisplacement = tension * 0.15 + abs(nervousness) * 0.05;
+            // Slow, menacing rotation based on bass
+            float rotAngle = uBass * 0.3;
+            modeOffset = vec3(
+                pos.x * cos(rotAngle) - pos.z * sin(rotAngle) - pos.x,
+                0.0,
+                pos.x * sin(rotAngle) + pos.z * cos(rotAngle) - pos.z
+            );
+        }
+        else if (uAnimationMode == 4) {
+            // CHAOS: Wild, unpredictable reactions to all frequencies
+            // Great for intense, aggressive music
+            float chaos = uBass + uMid + uTreble;
+            float randomPhase = snoise(pos * 5.0 + effectiveTime);
+            modeExpansion = 1.0 + chaos * 0.3 * (0.5 + randomPhase * 0.5);
+            modeDisplacement = chaos * 0.2 * abs(randomPhase);
+            // Chaotic directional displacement
+            modeOffset = vec3(
+                snoise(pos + effectiveTime * 2.0),
+                snoise(pos + effectiveTime * 2.0 + vec3(10.0)),
+                snoise(pos + effectiveTime * 2.0 + vec3(20.0))
+            ) * chaos * 0.15;
+        }
+        else if (uAnimationMode == 5) {
+            // FLOW: Smooth, liquid-like movement with audio
+            // Great for melodic, flowing music
+            float flow = uMid * 0.6 + uTreble * 0.3;
+            vec3 flowDir = vec3(
+                sin(pos.y * 3.0 + effectiveTime),
+                cos(pos.z * 3.0 + effectiveTime * 0.7),
+                sin(pos.x * 3.0 + effectiveTime * 1.3)
+            );
+            modeExpansion = 1.0 + flow * 0.2;
+            modeOffset = flowDir * flow * 0.1;
+        }
+        
+        // Apply animation mode effects
+        pos += modeOffset;
+
+        float expansion = modeExpansion + uBass * uRadialBias * uAudioInfluence;
+        float displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence) + modeDisplacement;
 
         // v3.0 Visual DNA Displacement
         if (uImageEnabled && uImageDisplacementFactor > 0.0) {
