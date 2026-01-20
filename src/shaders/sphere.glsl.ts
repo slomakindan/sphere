@@ -671,6 +671,117 @@ export const vertexShader = `
             modeExpansion = 1.0 + flow * 0.2;
             modeOffset = flowDir * flow * 0.1;
         }
+        else if (uAnimationMode == 6) {
+            // TOPOGRAPHIC DISPLACEMENT: Breathing landscape with explosion waves
+            // Bass → wave amplitude, Treble → surface detail/grain
+            float waveAmplitude = uBass * 0.5;
+            float detailNoise = snoise(pos * 5.0 + effectiveTime * uTreble * 2.0) * uTreble * 0.1;
+            
+            // Create concentric waves expanding from center
+            float distFromCenter = length(pos);
+            float wave = sin(distFromCenter * 8.0 - effectiveTime * 3.0 - uBass * 5.0) * waveAmplitude;
+            
+            // Explosion wave effect on bass peaks
+            float explosionWave = smoothstep(0.5, 1.0, uBass) * sin(distFromCenter * 4.0 - effectiveTime * 5.0);
+            
+            modeExpansion = 1.0 + wave * 0.3 + explosionWave * 0.2;
+            modeDisplacement = detailNoise + wave * 0.1;
+            modeOffset = normal * explosionWave * 0.15;
+        }
+        else if (uAnimationMode == 7) {
+            // KINETIC ENTROPY: Brownian chaos → geometric order on beats
+            // Silence → random motion, Beat → snap to structures
+            float beatStrength = smoothstep(0.4, 0.8, uBass); // Detect strong beats
+            
+            // Brownian motion (random displacement)
+            vec3 brownian = vec3(
+                snoise(pos * 3.0 + effectiveTime * 0.5),
+                snoise(pos * 3.0 + effectiveTime * 0.5 + vec3(100.0)),
+                snoise(pos * 3.0 + effectiveTime * 0.5 + vec3(200.0))
+            ) * 0.2;
+            
+            // Geometric structure (octahedron-like)
+            vec3 geometric = normalize(sign(pos)) * length(pos);
+            
+            // Lerp between chaos and order based on beat
+            vec3 targetPos = mix(pos + brownian, geometric, beatStrength);
+            modeOffset = (targetPos - pos) * 0.5;
+            
+            // Rotation on beats
+            float rotSpeed = uBass * 0.5;
+            modeOffset.x += pos.z * sin(effectiveTime * rotSpeed) * beatStrength * 0.1;
+            modeOffset.z -= pos.x * sin(effectiveTime * rotSpeed) * beatStrength * 0.1;
+            
+            modeExpansion = 1.0 + beatStrength * 0.2;
+        }
+        else if (uAnimationMode == 8) {
+            // NEURAL IMPULSE: Web-like connections that pulse with mids
+            // Creates neural network / electrical discharge effect
+            float connectionDensity = uMid * 2.0 + uTreble;
+            
+            // Create pulsing lines emanating from random points
+            float linePattern = sin(pos.x * 10.0 + effectiveTime) * sin(pos.y * 10.0 + effectiveTime * 0.7);
+            linePattern += sin(pos.y * 8.0 + effectiveTime * 1.3) * sin(pos.z * 8.0 + effectiveTime);
+            linePattern += sin(pos.z * 12.0 + effectiveTime * 0.5) * sin(pos.x * 12.0 + effectiveTime * 1.1);
+            
+            // Neural pulse effect - particles cluster along "connection lines"
+            float pulseIntensity = abs(linePattern) * connectionDensity;
+            
+            // Particles move toward line intersections when mids are strong
+            vec3 lineGradient = vec3(
+                cos(pos.x * 10.0 + effectiveTime) * sin(pos.y * 10.0 + effectiveTime * 0.7),
+                cos(pos.y * 8.0 + effectiveTime * 1.3) * sin(pos.z * 8.0 + effectiveTime),
+                cos(pos.z * 12.0 + effectiveTime * 0.5) * sin(pos.x * 12.0 + effectiveTime * 1.1)
+            );
+            
+            modeOffset = lineGradient * pulseIntensity * 0.05;
+            modeDisplacement = pulseIntensity * 0.1;
+            modeExpansion = 1.0 + uMid * 0.15;
+        }
+        else if (uAnimationMode == 9) {
+            // SINGULARITY CORE: Center attracts, transients cause explosion
+            // Creates black hole / supernova effect
+            float distFromCore = length(pos);
+            
+            // Attraction toward center (always active, scaled by bass)
+            float attraction = uBass * 0.3;
+            vec3 towardCenter = -normalize(pos) * attraction / (distFromCore + 0.5);
+            
+            // Transient detection (sharp bass attacks cause explosion)
+            float transient = pow(uBass, 3.0); // Cubic for detecting peaks
+            
+            // Explosion: repel particles outward on transients
+            vec3 explosion = normalize(pos) * transient * 0.4;
+            
+            // Combine: normally attract, but explode on transients
+            modeOffset = mix(towardCenter, explosion, smoothstep(0.3, 0.7, transient));
+            
+            // Core "breathing"
+            modeExpansion = 1.0 + sin(effectiveTime * 2.0) * uBass * 0.1;
+            modeDisplacement = transient * 0.15;
+        }
+        else if (uAnimationMode == 10) {
+            // SHELL VIBRATION: Waves on sphere surface (Chladni patterns)
+            // Amplitude = loudness, creates interference patterns
+            float totalAudio = uBass + uMid + uTreble;
+            
+            // Spherical harmonics-like patterns
+            float theta = atan(pos.z, pos.x);
+            float phi = asin(pos.y / length(pos));
+            
+            // Multiple wave frequencies create interference
+            float wave1 = sin(theta * 3.0 + effectiveTime * 2.0) * sin(phi * 2.0);
+            float wave2 = sin(theta * 5.0 - effectiveTime * 1.5) * sin(phi * 4.0 + effectiveTime);
+            float wave3 = sin(theta * 7.0 + effectiveTime * 0.7) * sin(phi * 3.0 - effectiveTime * 0.5);
+            
+            // Bass drives low-frequency waves, treble drives high-frequency
+            float chladniPattern = wave1 * uBass + wave2 * uMid + wave3 * uTreble;
+            
+            // Displacement along normal (surface vibration)
+            modeOffset = normal * chladniPattern * 0.15;
+            modeDisplacement = abs(chladniPattern) * 0.1;
+            modeExpansion = 1.0 + totalAudio * 0.1;
+        }
         
         // Apply animation mode effects
         pos += modeOffset;
