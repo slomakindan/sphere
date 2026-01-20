@@ -539,14 +539,16 @@ export const vertexShader = `
                 flockAngle = effectiveTime * 0.5;
             }
             
-            // Create circular offsets for seamless looping
-            // Speed controls how fast particles move through the flow field
-            float circleX = cos(flockAngle * uFlockingSpeed);
-            float circleY = sin(flockAngle * uFlockingSpeed);
-            float circleZ = cos(flockAngle * uFlockingSpeed * 0.7 + 1.57);
+            // Create circular offsets for GUARANTEED seamless looping
+            // Speed controls RADIUS (how far we travel), NOT the angle
+            // This ensures cos/sin always complete exactly one full circle (0 to 2π)
+            float radius = uFlockingSpeed * 2.0; // Speed = how far we move through noise field
+            float circleX = cos(flockAngle) * radius;
+            float circleY = sin(flockAngle) * radius;
+            float circleZ = cos(flockAngle + 2.094) * radius; // 120° offset for 3D motion
             
             // Sample position in noise field - offset by circular motion for seamless loop
-            vec3 noisePos = pos * uFlockingScale + vec3(circleX, circleY, circleZ) * 2.0;
+            vec3 noisePos = pos * uFlockingScale + vec3(circleX, circleY, circleZ);
             
             // Get 3D flow direction from noise (chaotic, not just swaying)
             // Each axis gets independent noise for truly chaotic motion
@@ -557,14 +559,19 @@ export const vertexShader = `
             // Create flow velocity vector from noise
             vec3 flowVelocity = vec3(n1, n2, n3);
             
-            // Add turbulence that increases with speed for more chaotic motion
-            float turbulence = uFlockingSpeed * 0.5;
-            vec3 turbPos = pos * uFlockingScale * 2.0 + vec3(circleX, circleY, circleZ) * 3.0;
+            // Add turbulence layers for more chaotic motion (also circular for seamless)
+            float turbRadius = uFlockingSpeed * 3.0;
+            vec3 turbOffset = vec3(
+                cos(flockAngle * 2.0) * turbRadius, // 2x frequency = 2 loops per cycle
+                sin(flockAngle * 2.0) * turbRadius,
+                cos(flockAngle * 2.0 + 1.047) * turbRadius
+            );
+            vec3 turbPos = pos * uFlockingScale * 2.0 + turbOffset;
             flowVelocity += vec3(
                 snoise(turbPos * 1.5),
                 snoise(turbPos * 1.5 + vec3(11.1, 22.2, 33.3)),
                 snoise(turbPos * 1.5 + vec3(44.4, 55.5, 66.6))
-            ) * turbulence;
+            ) * uFlockingSpeed * 0.5;
             
             // Normalize and apply tangential displacement (keeps particles near surface)
             vec3 tangentFlow = flowVelocity - normal * dot(flowVelocity, normal);
