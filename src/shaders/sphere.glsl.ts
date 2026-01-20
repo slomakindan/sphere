@@ -617,10 +617,18 @@ export const vertexShader = `
         float modeDisplacement = 0.0;
         vec3 modeOffset = vec3(0.0);
         
+        // Create seamless time for animation modes (0 to 2PI in loop, linear otherwise)
+        float loopAngle;
+        if (uLoopActive) {
+            loopAngle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
+        } else {
+            loopAngle = effectiveTime;
+        }
+        
         if (uAnimationMode == 1) {
             // BREATHING: Slow, deep pulsing synced to bass
             // Great for ambient, atmospheric tracks
-            float breathPhase = sin(effectiveTime * 0.5) * 0.5 + 0.5;
+            float breathPhase = sin(loopAngle) * 0.5 + 0.5;
             modeExpansion = 1.0 + uBass * breathPhase * 0.3;
             modeDisplacement = uBass * breathPhase * 0.1;
         }
@@ -637,7 +645,7 @@ export const vertexShader = `
             // TENSION: Building, oppressive energy (great for dark soundtracks)
             // Low rumble expands, high frequencies create "nervousness"
             float tension = uBass * 0.7 + uMid * 0.5;
-            float nervousness = uTreble * sin(effectiveTime * 5.0 + length(pos) * 3.0);
+            float nervousness = uTreble * sin(loopAngle * 2.0 + length(pos) * 3.0);
             modeExpansion = 1.0 + tension * 0.4;
             modeDisplacement = tension * 0.15 + abs(nervousness) * 0.05;
             // Slow, menacing rotation based on bass
@@ -652,14 +660,16 @@ export const vertexShader = `
             // CHAOS: Wild, unpredictable reactions to all frequencies
             // Great for intense, aggressive music
             float chaos = uBass + uMid + uTreble;
-            float randomPhase = snoise(pos * 5.0 + effectiveTime);
+            // Use circular offset for seamless looping
+            vec3 chaosOffset = vec3(cos(loopAngle), sin(loopAngle), cos(loopAngle * 0.7)) * 2.0;
+            float randomPhase = snoise(pos * 5.0 + chaosOffset);
             modeExpansion = 1.0 + chaos * 0.3 * (0.5 + randomPhase * 0.5);
             modeDisplacement = chaos * 0.2 * abs(randomPhase);
-            // Chaotic directional displacement
+            // Chaotic directional displacement (seamless)
             modeOffset = vec3(
-                snoise(pos + effectiveTime * 2.0),
-                snoise(pos + effectiveTime * 2.0 + vec3(10.0)),
-                snoise(pos + effectiveTime * 2.0 + vec3(20.0))
+                snoise(pos + chaosOffset),
+                snoise(pos + chaosOffset + vec3(10.0)),
+                snoise(pos + chaosOffset + vec3(20.0))
             ) * chaos * 0.15;
         }
         else if (uAnimationMode == 5) {
@@ -667,9 +677,9 @@ export const vertexShader = `
             // Great for melodic, flowing music
             float flow = uMid * 0.6 + uTreble * 0.3;
             vec3 flowDir = vec3(
-                sin(pos.y * 3.0 + effectiveTime),
-                cos(pos.z * 3.0 + effectiveTime * 0.7),
-                sin(pos.x * 3.0 + effectiveTime * 1.3)
+                sin(pos.y * 3.0 + loopAngle),
+                cos(pos.z * 3.0 + loopAngle * 0.7),
+                sin(pos.x * 3.0 + loopAngle * 1.3)
             );
             modeExpansion = 1.0 + flow * 0.2;
             modeOffset = flowDir * flow * 0.1;
@@ -678,14 +688,14 @@ export const vertexShader = `
             // TOPOGRAPHIC DISPLACEMENT: Breathing landscape with explosion waves
             // Bass → wave amplitude, Treble → surface detail/grain
             float waveAmplitude = uBass * 0.5;
-            float detailNoise = snoise(pos * 5.0 + effectiveTime * uTreble * 2.0) * uTreble * 0.1;
+            float detailNoise = snoise(pos * 5.0 + vec3(cos(loopAngle), sin(loopAngle), 0.0) * uTreble * 2.0) * uTreble * 0.1;
             
-            // Create concentric waves expanding from center
+            // Create concentric waves expanding from center (seamless)
             float distFromCenter = length(pos);
-            float wave = sin(distFromCenter * 8.0 - effectiveTime * 3.0 - uBass * 5.0) * waveAmplitude;
+            float wave = sin(distFromCenter * 8.0 - loopAngle * 2.0 - uBass * 5.0) * waveAmplitude;
             
-            // Explosion wave effect on bass peaks
-            float explosionWave = smoothstep(0.5, 1.0, uBass) * sin(distFromCenter * 4.0 - effectiveTime * 5.0);
+            // Explosion wave effect on bass peaks (seamless)
+            float explosionWave = smoothstep(0.5, 1.0, uBass) * sin(distFromCenter * 4.0 - loopAngle * 3.0);
             
             modeExpansion = 1.0 + wave * 0.3 + explosionWave * 0.2;
             modeDisplacement = detailNoise + wave * 0.1;
@@ -696,20 +706,21 @@ export const vertexShader = `
             // Silence → chaotic surface noise, Beat → organized patterns
             float beatStrength = smoothstep(0.3, 0.7, uBass); // Detect strong beats
             
-            // Brownian motion (chaotic surface displacement along normal)
-            float brownianNoise = snoise(pos * 4.0 + effectiveTime * 0.8);
+            // Brownian motion (chaotic surface displacement along normal - seamless)
+            vec3 brownOffset = vec3(cos(loopAngle), sin(loopAngle), cos(loopAngle * 0.7)) * 0.8;
+            float brownianNoise = snoise(pos * 4.0 + brownOffset);
             vec3 brownian = normal * brownianNoise * 0.15 * (1.0 - beatStrength);
             
-            // Organized wave pattern on beats (ring-like structures)
+            // Organized wave pattern on beats (ring-like structures - seamless)
             float dist = length(pos);
-            float ringPattern = sin(dist * 8.0 - effectiveTime * 2.0) * 0.5 + 0.5;
+            float ringPattern = sin(dist * 8.0 - loopAngle * 2.0) * 0.5 + 0.5;
             vec3 organized = normal * ringPattern * 0.1 * beatStrength;
             
             // Combine: chaos when quiet, order on beats
             modeOffset = brownian + organized;
             
-            // Subtle rotation on beats (keeps sphere cohesive)
-            float rotAngle = beatStrength * effectiveTime * 0.3;
+            // Subtle rotation on beats (keeps sphere cohesive - seamless)
+            float rotAngle = beatStrength * loopAngle * 0.3;
             modeOffset.x += pos.z * sin(rotAngle) * 0.02 * beatStrength;
             modeOffset.z -= pos.x * sin(rotAngle) * 0.02 * beatStrength;
             
@@ -720,19 +731,19 @@ export const vertexShader = `
             // Creates neural network / electrical discharge effect
             float connectionDensity = uMid * 2.0 + uTreble;
             
-            // Create pulsing lines emanating from random points
-            float linePattern = sin(pos.x * 10.0 + effectiveTime) * sin(pos.y * 10.0 + effectiveTime * 0.7);
-            linePattern += sin(pos.y * 8.0 + effectiveTime * 1.3) * sin(pos.z * 8.0 + effectiveTime);
-            linePattern += sin(pos.z * 12.0 + effectiveTime * 0.5) * sin(pos.x * 12.0 + effectiveTime * 1.1);
+            // Create pulsing lines emanating from random points (seamless)
+            float linePattern = sin(pos.x * 10.0 + loopAngle) * sin(pos.y * 10.0 + loopAngle * 0.7);
+            linePattern += sin(pos.y * 8.0 + loopAngle * 1.3) * sin(pos.z * 8.0 + loopAngle);
+            linePattern += sin(pos.z * 12.0 + loopAngle * 0.5) * sin(pos.x * 12.0 + loopAngle * 1.1);
             
             // Neural pulse effect - particles cluster along "connection lines"
             float pulseIntensity = abs(linePattern) * connectionDensity;
             
-            // Particles move toward line intersections when mids are strong
+            // Particles move toward line intersections when mids are strong (seamless)
             vec3 lineGradient = vec3(
-                cos(pos.x * 10.0 + effectiveTime) * sin(pos.y * 10.0 + effectiveTime * 0.7),
-                cos(pos.y * 8.0 + effectiveTime * 1.3) * sin(pos.z * 8.0 + effectiveTime),
-                cos(pos.z * 12.0 + effectiveTime * 0.5) * sin(pos.x * 12.0 + effectiveTime * 1.1)
+                cos(pos.x * 10.0 + loopAngle) * sin(pos.y * 10.0 + loopAngle * 0.7),
+                cos(pos.y * 8.0 + loopAngle * 1.3) * sin(pos.z * 8.0 + loopAngle),
+                cos(pos.z * 12.0 + loopAngle * 0.5) * sin(pos.x * 12.0 + loopAngle * 1.1)
             );
             
             modeOffset = lineGradient * pulseIntensity * 0.05;
@@ -757,8 +768,8 @@ export const vertexShader = `
             // Combine: normally attract, but explode on transients
             modeOffset = mix(towardCenter, explosion, smoothstep(0.3, 0.7, transient));
             
-            // Core "breathing"
-            modeExpansion = 1.0 + sin(effectiveTime * 2.0) * uBass * 0.1;
+            // Core "breathing" (seamless)
+            modeExpansion = 1.0 + sin(loopAngle * 2.0) * uBass * 0.1;
             modeDisplacement = transient * 0.15;
         }
         else if (uAnimationMode == 10) {
@@ -770,10 +781,10 @@ export const vertexShader = `
             float theta = atan(pos.z, pos.x);
             float phi = asin(pos.y / length(pos));
             
-            // Multiple wave frequencies create interference
-            float wave1 = sin(theta * 3.0 + effectiveTime * 2.0) * sin(phi * 2.0);
-            float wave2 = sin(theta * 5.0 - effectiveTime * 1.5) * sin(phi * 4.0 + effectiveTime);
-            float wave3 = sin(theta * 7.0 + effectiveTime * 0.7) * sin(phi * 3.0 - effectiveTime * 0.5);
+            // Multiple wave frequencies create interference (seamless)
+            float wave1 = sin(theta * 3.0 + loopAngle * 2.0) * sin(phi * 2.0);
+            float wave2 = sin(theta * 5.0 - loopAngle * 1.5) * sin(phi * 4.0 + loopAngle);
+            float wave3 = sin(theta * 7.0 + loopAngle * 0.7) * sin(phi * 3.0 - loopAngle * 0.5);
             
             // Bass drives low-frequency waves, treble drives high-frequency
             float chladniPattern = wave1 * uBass + wave2 * uMid + wave3 * uTreble;
