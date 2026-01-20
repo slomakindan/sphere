@@ -91,8 +91,11 @@ export const vertexShader = `
     uniform float uFlockingSpeed;       // Animation speed of streams
 
     // v5.2 Animation Modes (Audio-Reactive Presets)
-    // 0 = None, 1 = Breathing, 2 = Pulse, 3 = Tension, 4 = Chaos, 5 = Flow
+    // 0 = None, 1 = Breathing, 2 = Pulse, 3 = Tension, 4 = Chaos, 5 = Flow, 6-10 = Advanced
     uniform int uAnimationMode;
+
+    // v5.3 Size Lock - prevents sphere from changing size (for Telegram circles, etc.)
+    uniform bool uLockSize;
 
 
     varying vec3 vNormal;
@@ -689,30 +692,28 @@ export const vertexShader = `
             modeOffset = normal * explosionWave * 0.15;
         }
         else if (uAnimationMode == 7) {
-            // KINETIC ENTROPY: Brownian chaos → geometric order on beats
-            // Silence → random motion, Beat → snap to structures
-            float beatStrength = smoothstep(0.4, 0.8, uBass); // Detect strong beats
+            // KINETIC ENTROPY: Brownian chaos → ordered waves on beats
+            // Silence → chaotic surface noise, Beat → organized patterns
+            float beatStrength = smoothstep(0.3, 0.7, uBass); // Detect strong beats
             
-            // Brownian motion (random displacement)
-            vec3 brownian = vec3(
-                snoise(pos * 3.0 + effectiveTime * 0.5),
-                snoise(pos * 3.0 + effectiveTime * 0.5 + vec3(100.0)),
-                snoise(pos * 3.0 + effectiveTime * 0.5 + vec3(200.0))
-            ) * 0.2;
+            // Brownian motion (chaotic surface displacement along normal)
+            float brownianNoise = snoise(pos * 4.0 + effectiveTime * 0.8);
+            vec3 brownian = normal * brownianNoise * 0.15 * (1.0 - beatStrength);
             
-            // Geometric structure (octahedron-like)
-            vec3 geometric = normalize(sign(pos)) * length(pos);
+            // Organized wave pattern on beats (ring-like structures)
+            float dist = length(pos);
+            float ringPattern = sin(dist * 8.0 - effectiveTime * 2.0) * 0.5 + 0.5;
+            vec3 organized = normal * ringPattern * 0.1 * beatStrength;
             
-            // Lerp between chaos and order based on beat
-            vec3 targetPos = mix(pos + brownian, geometric, beatStrength);
-            modeOffset = (targetPos - pos) * 0.5;
+            // Combine: chaos when quiet, order on beats
+            modeOffset = brownian + organized;
             
-            // Rotation on beats
-            float rotSpeed = uBass * 0.5;
-            modeOffset.x += pos.z * sin(effectiveTime * rotSpeed) * beatStrength * 0.1;
-            modeOffset.z -= pos.x * sin(effectiveTime * rotSpeed) * beatStrength * 0.1;
+            // Subtle rotation on beats (keeps sphere cohesive)
+            float rotAngle = beatStrength * effectiveTime * 0.3;
+            modeOffset.x += pos.z * sin(rotAngle) * 0.02 * beatStrength;
+            modeOffset.z -= pos.x * sin(rotAngle) * 0.02 * beatStrength;
             
-            modeExpansion = 1.0 + beatStrength * 0.2;
+            modeExpansion = 1.0; // No expansion - keep size stable
         }
         else if (uAnimationMode == 8) {
             // NEURAL IMPULSE: Web-like connections that pulse with mids
@@ -786,8 +787,16 @@ export const vertexShader = `
         // Apply animation mode effects
         pos += modeOffset;
 
+        // Calculate expansion and displacement
         float expansion = modeExpansion + uBass * uRadialBias * uAudioInfluence;
         float displacement = noise * (uNoiseStrength + uMid * 0.5 * uAudioInfluence) + modeDisplacement;
+        
+        // v5.3 Size Lock - prevent sphere from changing size
+        if (uLockSize) {
+            expansion = 1.0; // No expansion/contraction
+            displacement = 0.0; // No radial displacement (keeps size)
+            // But keep modeOffset for internal motion only if it's tangential
+        }
 
         // v3.0 Visual DNA Displacement
         if (uImageEnabled && uImageDisplacementFactor > 0.0) {

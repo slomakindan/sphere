@@ -186,7 +186,9 @@ const params = {
     hideChaos: false,
     // v5.2 Animation Modes
     animationMode: 0,
-    animationModeLabel: 'Нет' // For GUI display
+    animationModeLabel: 'Нет', // For GUI display
+    // v5.3 Size Lock (for Telegram circles, etc.)
+    lockSize: false
 };
 
 // Animation mode options for dropdown
@@ -217,6 +219,8 @@ globalFolder.add(params, 'animationModeLabel', Object.keys(animationModes)).name
     params.animationMode = mode;
     sphere.setParams({ animationMode: mode });
 });
+// v5.3 Size Lock - prevents sphere from changing size
+globalFolder.add(params, 'lockSize').name('🔒 Фикс. Размер').onChange(v => sphere.setParams({ lockSize: v }));
 
 document.getElementById('gui-container')?.appendChild(gui.domElement);
 

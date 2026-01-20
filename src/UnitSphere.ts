@@ -106,7 +106,9 @@ export class UnitSphere {
                 uFlockingScale: { value: 3.0 },
                 uFlockingSpeed: { value: 0.3 },
                 // v5.2 Animation Modes
-                uAnimationMode: { value: 0 }
+                uAnimationMode: { value: 0 },
+                // v5.3 Size Lock
+                uLockSize: { value: false }
             },
             transparent: true,
             depthTest: false,
@@ -306,6 +308,9 @@ export class UnitSphere {
 
         // v5.2 Animation Modes
         if (params.animationMode !== undefined) u.uAnimationMode.value = params.animationMode;
+
+        // v5.3 Size Lock
+        if (params.lockSize !== undefined) u.uLockSize.value = params.lockSize;
 
         // v3.0 Shape Morphing
         if (params.morphTarget !== undefined) u.uMorphTarget.value = params.morphTarget;
