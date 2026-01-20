@@ -528,41 +528,55 @@ export const vertexShader = `
             }
         }
         
-        // v4.5 Flocking - cluster particles into smooth flowing streams
+        // v4.5 Flocking - cluster particles into chaotic flowing streams
         if (uFlockingStrength > 0.0) {
-            float flockTime;
+            // Create a seamless circular time for loop mode
+            float flockAngle;
             if (uLoopActive) {
-                // For seamless looping: use angle directly
-                // uFlockingSpeed determines how many complete cycles happen per loop
-                // If speed=1, one full cycle per loop. If speed=2, two cycles, etc.
-                float angle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853 * uFlockingSpeed;
-                flockTime = angle;
+                // Seamless loop: time goes around a circle
+                flockAngle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
             } else {
-                flockTime = effectiveTime * uFlockingSpeed;
+                flockAngle = effectiveTime * 0.5;
             }
             
-            // Use smooth noise to create flowing "lanes" that particles follow
-            // Higher scale = more lanes/streams, lower = fewer wider streams
-            vec3 streamPos = pos * uFlockingScale;
+            // Create circular offsets for seamless looping
+            // Speed controls how fast particles move through the flow field
+            float circleX = cos(flockAngle * uFlockingSpeed);
+            float circleY = sin(flockAngle * uFlockingSpeed);
+            float circleZ = cos(flockAngle * uFlockingSpeed * 0.7 + 1.57);
             
-            // Create a sinusoidal pattern based on position to form "lanes"
-            // Using sin() ensures values wrap around smoothly
-            float lane1 = sin(streamPos.x * 3.14159 + flockTime) * sin(streamPos.y * 2.0);
-            float lane2 = sin(streamPos.y * 3.14159 + flockTime * 0.7) * sin(streamPos.z * 2.0);
-            float lane3 = sin(streamPos.z * 3.14159 + flockTime * 1.3) * sin(streamPos.x * 2.0);
+            // Sample position in noise field - offset by circular motion for seamless loop
+            vec3 noisePos = pos * uFlockingScale + vec3(circleX, circleY, circleZ) * 2.0;
             
-            // Create smooth stream displacement (tangential, not radial)
-            vec3 streamDir = normalize(cross(normal, vec3(lane1, lane2, lane3)));
+            // Get 3D flow direction from noise (chaotic, not just swaying)
+            // Each axis gets independent noise for truly chaotic motion
+            float n1 = snoise(noisePos);
+            float n2 = snoise(noisePos + vec3(17.3, 31.7, 47.1)); // Different seed
+            float n3 = snoise(noisePos + vec3(73.1, 13.7, 97.3)); // Different seed
             
-            // For noise-based intensity, use circular offset
-            float noiseOffset = sin(flockTime) * 0.5 + cos(flockTime * 0.7) * 0.5;
-            float streamIntensity = (sin(snoise(streamPos + noiseOffset) * 6.28) + 1.0) * 0.5;
+            // Create flow velocity vector from noise
+            vec3 flowVelocity = vec3(n1, n2, n3);
+            
+            // Add turbulence that increases with speed for more chaotic motion
+            float turbulence = uFlockingSpeed * 0.5;
+            vec3 turbPos = pos * uFlockingScale * 2.0 + vec3(circleX, circleY, circleZ) * 3.0;
+            flowVelocity += vec3(
+                snoise(turbPos * 1.5),
+                snoise(turbPos * 1.5 + vec3(11.1, 22.2, 33.3)),
+                snoise(turbPos * 1.5 + vec3(44.4, 55.5, 66.6))
+            ) * turbulence;
+            
+            // Normalize and apply tangential displacement (keeps particles near surface)
+            vec3 tangentFlow = flowVelocity - normal * dot(flowVelocity, normal);
+            
+            // Stream intensity based on position in noise field
+            float streamIntensity = (n1 + 1.0) * 0.5;
             
             // Track structure intensity for Hide Chaos feature
             vStructureIntensity = max(vStructureIntensity, streamIntensity);
             
-            // Concentrate particles into streams by pulling toward stream centers
-            pos += streamDir * streamIntensity * uFlockingStrength * 0.3;
+            // Apply flow with strength
+            pos += normalize(tangentFlow + vec3(0.001)) * streamIntensity * uFlockingStrength * 0.4;
         }
         
         // v3.4 Seamless Color Spots
