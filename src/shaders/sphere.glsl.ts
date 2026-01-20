@@ -540,53 +540,38 @@ export const vertexShader = `
             // Create a seamless circular time for loop mode
             float flockAngle;
             if (uLoopActive) {
-                // Seamless loop: time goes around a circle
+                // Seamless loop: time goes around a circle (0 to 2*PI)
                 flockAngle = (mod(effectiveTime, uLoopDuration) / uLoopDuration) * 6.2831853;
             } else {
                 flockAngle = effectiveTime * 0.5;
             }
             
-            // Create circular offsets for GUARANTEED seamless looping
-            // Speed controls RADIUS (how far we travel), NOT the angle
-            // This ensures cos/sin always complete exactly one full circle (0 to 2π)
-            float radius = uFlockingSpeed * 2.0; // Speed = how far we move through noise field
-            float circleX = cos(flockAngle) * radius;
-            float circleY = sin(flockAngle) * radius;
-            float circleZ = cos(flockAngle + 2.094) * radius; // 120° offset for 3D motion
+            // SIMPLE CIRCULAR MOTION - guaranteed seamless
+            // Speed controls how far we move through the noise field (radius of circle)
+            float radius = uFlockingSpeed * 2.0;
             
-            // Sample position in noise field - offset by circular motion for seamless loop
-            vec3 noisePos = pos * uFlockingScale + vec3(circleX, circleY, circleZ);
+            // 2D circular motion in XY plane - simplest form of seamless loop
+            float cx = cos(flockAngle) * radius;
+            float cy = sin(flockAngle) * radius;
             
-            // Get 3D flow direction from noise (chaotic, not just swaying)
-            // Each axis gets independent noise for truly chaotic motion
+            // Sample noise at position offset by circular motion
+            vec3 noisePos = pos * uFlockingScale + vec3(cx, cy, 0.0);
+            
+            // Get flow direction from noise
             float n1 = snoise(noisePos);
-            float n2 = snoise(noisePos + vec3(17.3, 31.7, 47.1)); // Different seed
-            float n3 = snoise(noisePos + vec3(73.1, 13.7, 97.3)); // Different seed
+            float n2 = snoise(noisePos + vec3(17.3, 31.7, 47.1));
+            float n3 = snoise(noisePos + vec3(73.1, 13.7, 97.3));
             
-            // Create flow velocity vector from noise
+            // Create flow velocity
             vec3 flowVelocity = vec3(n1, n2, n3);
             
-            // Add turbulence layers for more chaotic motion (also circular for seamless)
-            float turbRadius = uFlockingSpeed * 3.0;
-            vec3 turbOffset = vec3(
-                cos(flockAngle * 2.0) * turbRadius, // 2x frequency = 2 loops per cycle
-                sin(flockAngle * 2.0) * turbRadius,
-                cos(flockAngle * 2.0 + 1.047) * turbRadius
-            );
-            vec3 turbPos = pos * uFlockingScale * 2.0 + turbOffset;
-            flowVelocity += vec3(
-                snoise(turbPos * 1.5),
-                snoise(turbPos * 1.5 + vec3(11.1, 22.2, 33.3)),
-                snoise(turbPos * 1.5 + vec3(44.4, 55.5, 66.6))
-            ) * uFlockingSpeed * 0.5;
-            
-            // Normalize and apply tangential displacement (keeps particles near surface)
+            // Project flow to tangent plane (keeps particles on surface)
             vec3 tangentFlow = flowVelocity - normal * dot(flowVelocity, normal);
             
-            // Stream intensity based on position in noise field
+            // Stream intensity
             float streamIntensity = (n1 + 1.0) * 0.5;
             
-            // Track structure intensity for Hide Chaos feature
+            // Track for Hide Chaos feature
             vStructureIntensity = max(vStructureIntensity, streamIntensity);
             
             // Apply flow with strength
